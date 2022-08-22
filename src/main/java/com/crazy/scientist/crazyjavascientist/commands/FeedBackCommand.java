@@ -1,6 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.crazy.scientist.crazyjavascientist.SendMail;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -23,6 +24,7 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -34,56 +36,55 @@ import java.util.Map;
 public class FeedBackCommand extends ListenerAdapter {
 
 
-    private List<CommandData> commands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
-            .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given")));
-    @Override
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-
-         if(event.getOption("email").getAsBoolean()){
-            TextInput name = TextInput.create("email-feedback-name","Name", TextInputStyle.SHORT)
-                    .setMinLength(1)
-                    .setRequired(true)
-                    .build();
-
-            TextInput feedBackMessage = TextInput.create("email-feedback-message","Feedback Message",TextInputStyle.PARAGRAPH)
-                    .setRequired(true)
-                    .setMinLength(10)
-                    .setMaxLength(500)
-                    .setPlaceholder("Tell us what features you'd like to have added or how I am doing as a bot!")
-                    .build();
+    public void onFeedbackSlashCommand(@NotNull SlashCommandInteractionEvent event) {
 
 
+        if(event.getOption("email") != null) {
 
-            Modal feedBackModal = Modal.create("email-feedback-modal","Give Some Feedback!")
-                    .addActionRows(ActionRow.of(name), ActionRow.of(feedBackMessage))
-                    .build();
+            if (event.getOption("email").getAsBoolean()) {
+                TextInput name = TextInput.create("email-feedback-name", "Name", TextInputStyle.SHORT)
+                        .setMinLength(1)
+                        .setRequired(true)
+                        .build();
 
-            event.replyModal(feedBackModal).queue();
-
-
-        }else if(event.getName().equalsIgnoreCase("feedback")){
-
-            TextInput name = TextInput.create("feedback-name","Name", TextInputStyle.SHORT)
-                    .setMinLength(1)
-                    .setRequired(true)
-                    .build();
-
-            TextInput feedBackMessage = TextInput.create("feedback-message","Feedback Message",TextInputStyle.PARAGRAPH)
-                    .setRequired(true)
-                    .setMinLength(10)
-                    .setMaxLength(500)
-                    .setPlaceholder("Tell us what features you'd like to have added or how I am doing as a bot!")
-                    .build();
+                TextInput feedBackMessage = TextInput.create("email-feedback-message", "Feedback Message", TextInputStyle.PARAGRAPH)
+                        .setRequired(true)
+                        .setMinLength(10)
+                        .setMaxLength(500)
+                        .setPlaceholder("Tell us what features you'd like to have added or how I am doing as a bot!")
+                        .build();
 
 
+                Modal feedBackModal = Modal.create("email-feedback-modal", "Give Some Feedback!")
+                        .addActionRows(ActionRow.of(name), ActionRow.of(feedBackMessage))
+                        .build();
 
-            Modal feedBackModal = Modal.create("feedback-modal","Give Some Feedback!")
-                    .addActionRows(ActionRow.of(name), ActionRow.of(feedBackMessage))
-                    .build();
-
-            event.replyModal(feedBackModal).queue();
+                event.replyModal(feedBackModal).queue();
 
 
+            } else if (event.getName().equalsIgnoreCase("feedback")) {
+
+                TextInput name = TextInput.create("feedback-name", "Name", TextInputStyle.SHORT)
+                        .setMinLength(1)
+                        .setRequired(true)
+                        .build();
+
+                TextInput feedBackMessage = TextInput.create("feedback-message", "Feedback Message", TextInputStyle.PARAGRAPH)
+                        .setRequired(true)
+                        .setMinLength(10)
+                        .setMaxLength(500)
+                        .setPlaceholder("Tell us what features you'd like to have added or how I am doing as a bot!")
+                        .build();
+
+
+                Modal feedBackModal = Modal.create("feedback-modal", "Give Some Feedback!")
+                        .addActionRows(ActionRow.of(name), ActionRow.of(feedBackMessage))
+                        .build();
+
+                event.replyModal(feedBackModal).queue();
+
+
+            }
         }
 
     }
@@ -92,8 +93,8 @@ public class FeedBackCommand extends ListenerAdapter {
 
 
 
-    @Override
-    public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+
+    public void onFeedbackModal(@NotNull ModalInteractionEvent event) {
 
         if(event.getModalId().equalsIgnoreCase("feedback-modal")){
 
@@ -125,10 +126,7 @@ public class FeedBackCommand extends ListenerAdapter {
         }
     }
 
-    @Override
-    public void onGuildReady(@NotNull GuildReadyEvent event) {
-        event.getGuild().updateCommands().addCommands(this.commands).queue();
-    }
+
 
 
 }

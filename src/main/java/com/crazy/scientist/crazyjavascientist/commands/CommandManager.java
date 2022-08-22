@@ -1,5 +1,6 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
+import com.crazy.scientist.crazyjavascientist.SendMail;
 import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -22,6 +24,8 @@ import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.internal.requests.Route;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.security.auth.login.LoginException;
 import java.time.OffsetDateTime;
@@ -33,13 +37,20 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 @Slf4j
 @Data
+
 public class CommandManager extends ListenerAdapter {
 
+
+    private FeedBackCommand feedBackCommand = new FeedBackCommand();
+    private HelpMessage helpMessage = new HelpMessage();
 
     private List<CommandData> commands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
             .addOption(OptionType.STRING,"message-id","The message id of what you wish to showcase", true),
             Commands.slash("get-message-history","Shows Server Message History.")
-                    .addOption(OptionType.STRING,"msg-id","ID of the message you wish to find",true)));
+                    .addOption(OptionType.STRING,"msg-id","ID of the message you wish to find",true),
+            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot"),
+            Commands.slash("feedback", "Send feedback to the bot owner.")
+                    .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true)));
     public CommandManager() {
 
     }
@@ -51,6 +62,9 @@ public class CommandManager extends ListenerAdapter {
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         String command = event.getName();
 
+
+        feedBackCommand.onFeedbackSlashCommand(event);
+        helpMessage.onHelpSlashCommand(event);
 
 
         if(command.equalsIgnoreCase("get-message-history")){
@@ -89,6 +103,13 @@ public class CommandManager extends ListenerAdapter {
                 textChannel1.sendMessageFormat("%s%n%s",messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
             }
         }
+    }
+
+
+    @Override
+    public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+
+       feedBackCommand.onFeedbackModal(event);
     }
 
 

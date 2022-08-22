@@ -46,7 +46,7 @@ public class DiscordBotConfigJDAStyle {
        shardManager = builder.build();
         log.info(shardManager.getGatewayIntents().toString());
 
-       shardManager.addEventListener(new CommandManager(), new EventListeners(), new FeedBackCommand(), new HelpMessage());
+       shardManager.addEventListener(new CommandManager(), new EventListeners());
 
 
     }

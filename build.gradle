@@ -9,10 +9,11 @@ version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
 configurations {
-    compileOnly {
+    runtimeClasspath {
         extendsFrom annotationProcessor
     }
 }
+
 
 repositories {
     mavenCentral()
@@ -34,4 +35,19 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+jar {
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from {
+        configurations.runtimeClasspath.filter{ it.exists() }.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    manifest {
+        attributes(
+                'Class-Path': configurations.runtimeClasspath.collect { it.getName() }.join(' '),
+                'Main-Class': 'com.crazy.scientist.crazyjavascientist.CrazyJavaScientistApplication'
+        )
+    }
 }

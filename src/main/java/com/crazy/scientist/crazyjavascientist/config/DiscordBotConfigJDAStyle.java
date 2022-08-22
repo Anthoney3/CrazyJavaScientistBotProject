@@ -40,11 +40,9 @@ public class DiscordBotConfigJDAStyle {
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
         builder.setStatus(OnlineStatus.ONLINE);
         builder.setActivity(Activity.watching("Yo Momma Pole Dance"));
-        log.info(config.get("TOKEN"));
 
 
        shardManager = builder.build();
-        log.info(shardManager.getGatewayIntents().toString());
 
        shardManager.addEventListener(new CommandManager(), new EventListeners());
 

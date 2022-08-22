@@ -80,7 +80,7 @@ public class CommandManager extends ListenerAdapter {
                     log.info(lastMessage.toString());
                 }
             }else{
-                event.getChannel().sendMessageFormat("Messages Found:%n" + "%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
+                event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
                 log.info(lastMessage.toString());
             }
 
@@ -88,18 +88,27 @@ public class CommandManager extends ListenerAdapter {
 
         }else if(command.equalsIgnoreCase("add-to-showcase")) {
 
-            log.info("add-to-showcase was called for some fuckin reason");
 
+
+            List<String> responseMessages = new ArrayList<>();
+
+            String userName = event.getUser().getName();
+            responseMessages.add(userName + " Added this beauty to Show off!");
+            responseMessages.add(userName + " is such a show off!");
+            responseMessages.add(userName + " You're gonna have to teach me how you did this one!");
+            responseMessages.add(userName + " I'm so Jelly!");
+
+            int messagePick = (int)(Math.random() * responseMessages.size());
 
             TextChannel textChannel1 = (TextChannel) Objects.requireNonNull(event.getGuild()).getGuildChannelById(1010606877236789319L);
 
-            log.info(event.getOption("message-id").getAsString());
+
 
             if (textChannel1 != null) {
-
+                log.info("Message "  + event.getOption("message-id").getAsString() + " was added to the " + textChannel1.getName() );
                 Message messageToBeMoved = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("message-id")).getAsString()).complete();
                 event.reply("Your message was sent to " + textChannel1.getName() + "!").queue();
-                textChannel1.sendMessage(event.getUser().getAsTag() + " Added this beauty to Show case! \n").queue();
+                textChannel1.sendMessage(responseMessages.get(messagePick)).queue();
                 textChannel1.sendMessageFormat("%s%n%s",messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
             }
         }

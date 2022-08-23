@@ -46,6 +46,7 @@ public class DiscordBotConfigJDAStyle {
 
        shardManager.addEventListener(new CommandManager(), new EventListeners());
 
+       
 
     }
 

@@ -43,6 +43,7 @@ public class CommandManager extends ListenerAdapter {
 
     private FeedBackCommand feedBackCommand = new FeedBackCommand();
     private HelpMessage helpMessage = new HelpMessage();
+    private GoogleSearch googleSearch = new GoogleSearch();
 
     private List<CommandData> commands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
             .addOption(OptionType.STRING,"message-id","The message id of what you wish to showcase", true),
@@ -50,7 +51,8 @@ public class CommandManager extends ListenerAdapter {
                     .addOption(OptionType.STRING,"msg-id","ID of the message you wish to find",true),
             Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot"),
             Commands.slash("feedback", "Send feedback to the bot owner.")
-                    .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true)));
+                    .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
+            Commands.slash("search","Google Search: In testing").addOption(OptionType.STRING,"prompt","what images you're looking for",true)));
     public CommandManager() {
 
     }
@@ -65,6 +67,7 @@ public class CommandManager extends ListenerAdapter {
 
         feedBackCommand.onFeedbackSlashCommand(event);
         helpMessage.onHelpSlashCommand(event);
+        googleSearch.onSearchCommand(event);
 
 
         if(command.equalsIgnoreCase("get-message-history")){
@@ -83,6 +86,7 @@ public class CommandManager extends ListenerAdapter {
                 event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
                 log.info(lastMessage.toString());
             }
+
 
 
 

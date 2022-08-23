@@ -1,6 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.google.gson.Gson;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -8,6 +9,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.Scanner;
 
 @Slf4j
+@NoArgsConstructor
 public class GoogleSearch extends ListenerAdapter {
 
     public void onSearchCommand(@Nonnull SlashCommandInteraction event) {

@@ -10,13 +10,15 @@ public class CrazyJavaScientistApplication {
 
 
     public static void main(String[] args) {
-        SpringApplication.run(CrazyJavaScientistApplication.class, args);
-
         try {
-             new DiscordBotConfigJDAStyle();
+            new DiscordBotConfigJDAStyle();
         }catch (Exception e){
             e.printStackTrace();
         }
+
+        SpringApplication.run(CrazyJavaScientistApplication.class, args);
+
+
 
     }
 

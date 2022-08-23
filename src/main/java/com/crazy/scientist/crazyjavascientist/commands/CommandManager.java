@@ -37,13 +37,20 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 @Slf4j
 @Data
-
+@Component
 public class CommandManager extends ListenerAdapter {
 
 
+
     private FeedBackCommand feedBackCommand = new FeedBackCommand();
+
     private HelpMessage helpMessage = new HelpMessage();
+
     private GoogleSearch googleSearch = new GoogleSearch();
+
+    private ShutdownBot shutdownBot = new ShutdownBot();
+
+
 
     private List<CommandData> commands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
             .addOption(OptionType.STRING,"message-id","The message id of what you wish to showcase", true),
@@ -52,70 +59,97 @@ public class CommandManager extends ListenerAdapter {
             Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot"),
             Commands.slash("feedback", "Send feedback to the bot owner.")
                     .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
-            Commands.slash("search","Google Search: In testing").addOption(OptionType.STRING,"prompt","what images you're looking for",true)));
+            Commands.slash("search","Google Search: In testing").addOption(OptionType.STRING,"prompt","what images you're looking for",true),
+            Commands.slash("logout","Kills the bot and shuts it down")));
     public CommandManager() {
 
     }
 
-
-
+    public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, GoogleSearch googleSearch, ShutdownBot shutdownBot) {
+        this.feedBackCommand = feedBackCommand;
+        this.helpMessage = helpMessage;
+        this.googleSearch = googleSearch;
+        this.shutdownBot = shutdownBot;
+    }
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         String command = event.getName();
 
 
-        feedBackCommand.onFeedbackSlashCommand(event);
-        helpMessage.onHelpSlashCommand(event);
-        googleSearch.onSearchCommand(event);
+        try {
+            switch (event.getName()) {
+
+                case "feedback":
+                    feedBackCommand.onFeedbackSlashCommand(event);
+                    break;
+
+                case "help":
+                    helpMessage.onHelpSlashCommand(event);
+                    break;
+
+                case "search":
+                    googleSearch.onSearchCommand(event);
+                    break;
+
+                case "logout":
+                    shutdownBot.shutdownBot(event);
+                    break;
+
+                default:
 
 
-        if(command.equalsIgnoreCase("get-message-history")){
+                    if (command.equalsIgnoreCase("get-message-history")) {
 
 
-            Message lastMessage = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("msg-id")).getAsString()).complete();
+                        Message lastMessage = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("msg-id")).getAsString()).complete();
 
-            if(lastMessage.getReferencedMessage() == null){
-                if(lastMessage.getAttachments().isEmpty()){
-                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(),lastMessage.getJumpUrl()).queue();
-                }else {
-                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                    log.info(lastMessage.toString());
-                }
-            }else{
-                event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                log.info(lastMessage.toString());
+                        if (lastMessage.getReferencedMessage() == null) {
+                            if (lastMessage.getAttachments().isEmpty()) {
+                                event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getJumpUrl()).queue();
+                            } else {
+                                event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
+                                log.info(lastMessage.toString());
+                            }
+                        } else {
+                            event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
+                            log.info(lastMessage.toString());
+                        }
+
+
+                    } else if (command.equalsIgnoreCase("add-to-showcase")) {
+
+
+                        List<String> responseMessages = new ArrayList<>();
+
+                        String userName = event.getUser().getName();
+                        responseMessages.add(userName + " Added this beauty to Show off!");
+                        responseMessages.add(userName + " is such a show off!");
+                        responseMessages.add(userName + " You're gonna have to teach me how you did this one!");
+                        responseMessages.add(userName + " I'm so Jelly!");
+
+                        int messagePick = (int) (Math.random() * responseMessages.size());
+
+                        TextChannel textChannel1 = (TextChannel) Objects.requireNonNull(event.getGuild()).getGuildChannelById(1010606877236789319L);
+
+
+                        if (textChannel1 != null) {
+                            log.info("Message " + event.getOption("message-id").getAsString() + " was added to the " + textChannel1.getName());
+                            Message messageToBeMoved = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("message-id")).getAsString()).complete();
+                            event.reply("Your message was sent to " + textChannel1.getName() + "!").queue();
+                            textChannel1.sendMessage(responseMessages.get(messagePick)).queue();
+                            textChannel1.sendMessageFormat("%s%n%s", messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
+                        }
+                    }
+                    break;
+
             }
+        }catch (Exception e){
 
-
-
-
-        }else if(command.equalsIgnoreCase("add-to-showcase")) {
-
-
-
-            List<String> responseMessages = new ArrayList<>();
-
-            String userName = event.getUser().getName();
-            responseMessages.add(userName + " Added this beauty to Show off!");
-            responseMessages.add(userName + " is such a show off!");
-            responseMessages.add(userName + " You're gonna have to teach me how you did this one!");
-            responseMessages.add(userName + " I'm so Jelly!");
-
-            int messagePick = (int)(Math.random() * responseMessages.size());
-
-            TextChannel textChannel1 = (TextChannel) Objects.requireNonNull(event.getGuild()).getGuildChannelById(1010606877236789319L);
-
-
-
-            if (textChannel1 != null) {
-                log.info("Message "  + event.getOption("message-id").getAsString() + " was added to the " + textChannel1.getName() );
-                Message messageToBeMoved = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("message-id")).getAsString()).complete();
-                event.reply("Your message was sent to " + textChannel1.getName() + "!").queue();
-                textChannel1.sendMessage(responseMessages.get(messagePick)).queue();
-                textChannel1.sendMessageFormat("%s%n%s",messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
-            }
+            event.reply("Something went wrong, Java Masochist will take a look into it...").queue();
+            e.printStackTrace();
         }
+
     }
 
 

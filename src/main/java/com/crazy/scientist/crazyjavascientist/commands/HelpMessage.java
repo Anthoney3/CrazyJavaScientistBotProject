@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@NoArgsConstructor
 public class HelpMessage extends ListenerAdapter {
 
 

@@ -15,8 +15,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HelpMessage extends ListenerAdapter {
 
+@NoArgsConstructor
+public class HelpMessage extends ListenerAdapter {
 
 
     public void onHelpSlashCommand(@NotNull SlashCommandInteractionEvent event) {
@@ -28,7 +29,8 @@ public class HelpMessage extends ListenerAdapter {
 
             helpMessage.setAuthor("☕ Java Masochist ☕")
                     .setTitle("Crazy Java Scientist Commands")
-                    .addField("/feedback email-id: (true, false)"," test ",false);
+                    .addField("/feedback email-id: (true, false)"," test ",false)
+                    .addField("This is a Test","Welcome to deez Nuts get settled right in! We won't bite  :eyes:",false);
 
             MessageEmbed helpMessageEmbed = helpMessage.build();
 

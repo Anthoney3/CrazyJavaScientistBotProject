@@ -33,13 +33,14 @@ import java.util.List;
 import java.util.Map;
 
 
+@NoArgsConstructor
 public class FeedBackCommand extends ListenerAdapter {
 
 
     public void onFeedbackSlashCommand(@NotNull SlashCommandInteractionEvent event) {
 
 
-        if(event.getOption("email") != null) {
+
 
             if (event.getOption("email").getAsBoolean()) {
                 TextInput name = TextInput.create("email-feedback-name", "Name", TextInputStyle.SHORT)
@@ -87,7 +88,7 @@ public class FeedBackCommand extends ListenerAdapter {
             }
         }
 
-    }
+
 
 
 

@@ -1,45 +1,22 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
-import com.crazy.scientist.crazyjavascientist.OAuthToken;
-import com.crazy.scientist.crazyjavascientist.OsuApiCall;
-import com.crazy.scientist.crazyjavascientist.SendMail;
-import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
+import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.managers.channel.concrete.TextChannelManager;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.sharding.ShardManager;
-import net.dv8tion.jda.internal.entities.RoleImpl;
-import net.dv8tion.jda.internal.requests.Route;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.security.auth.login.LoginException;
-import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
+
 @Slf4j
 @Data
 @Component
@@ -54,20 +31,19 @@ public class CommandManager extends ListenerAdapter {
     private OsuApiCall osuApiCall = new OsuApiCall();
 
 
+    private List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
+            .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
+            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot")));
+    private List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats","Gets a user's stats for osu").addOption(OptionType.STRING,"username","Uses the users server name to search for stats; Ex. 1 searches for 1's stats",true)));
 
 
-
-    private List<CommandData> commands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
+    private List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
             .addOption(OptionType.STRING,"message-id","The message id of what you wish to showcase", true),
             Commands.slash("get-message-history","Shows Server Message History.")
                     .addOption(OptionType.STRING,"msg-id","ID of the message you wish to find",true),
-            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot"),
-            Commands.slash("feedback", "Send feedback to the bot owner.")
-                    .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
             Commands.slash("search","Google Search: In testing").addOption(OptionType.STRING,"prompt","what images you're looking for",true),
             Commands.slash("logout","Kills the bot and shuts it down"),
-            Commands.slash("get-search-history","Retrieves the bots google search history"),
-            Commands.slash("get-osu-stats","Gets a user's stats for osu").addOption(OptionType.STRING,"user-id","The user id can be found in the address bar of the user",true)));
+            Commands.slash("get-search-history","Retrieves the bots google search history")));
     public CommandManager() {
 
     }
@@ -156,7 +132,7 @@ public class CommandManager extends ListenerAdapter {
             }
             }catch(Exception e){
 
-                event.reply("Something went wrong, " + event.getGuild().getMemberById(416342612484554752L) + " will take a look into it...").queue();
+                event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
                 e.printStackTrace();
             }
 
@@ -170,16 +146,19 @@ public class CommandManager extends ListenerAdapter {
        feedBackCommand.onFeedbackModal(event);
     }
 
-
-
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
-       event.getGuild().updateCommands().addCommands(this.commands).queue();
+
+        switch(event.getGuild().getName()){
+            case "The Java Way"-> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+            case "Osu Chads"-> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+        }
+
     }
 
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
-       event.getGuild().updateCommands().addCommands(this.commands).queue();
+       event.getGuild().updateCommands().addCommands(this.globalCommands).queue();
     }
 
 }

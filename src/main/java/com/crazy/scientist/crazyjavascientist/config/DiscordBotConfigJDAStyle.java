@@ -1,6 +1,6 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
-import com.crazy.scientist.crazyjavascientist.OAuthToken;
+import com.crazy.scientist.crazyjavascientist.osu.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;

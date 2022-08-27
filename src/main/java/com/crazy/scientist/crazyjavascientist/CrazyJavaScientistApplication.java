@@ -6,6 +6,8 @@ import club.minnced.discord.webhook.send.WebhookEmbed;
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessageBuilder;
 import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
+import com.crazy.scientist.crazyjavascientist.satisfactory.enums.Ingots;
+import com.crazy.scientist.crazyjavascientist.satisfactory.enums.Resources;
 import net.dv8tion.jda.api.entities.Webhook;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,6 +26,8 @@ public class CrazyJavaScientistApplication {
 
 
     public static void main(String[] args) {
+
+        System.out.println(Ingots.IRON_INGOT.getValue() + " " + Ingots.IRON_INGOT.getResource1());
 
 
 

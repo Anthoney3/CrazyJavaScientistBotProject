@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist;
+package com.crazy.scientist.crazyjavascientist.osu;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -9,18 +9,11 @@ import org.json.JSONObject;
 import javax.annotation.Nonnull;
 import java.awt.*;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -32,9 +25,22 @@ public class OsuApiCall {
 
         if (event.getName().equalsIgnoreCase("get-osu-stats")) {
 
+            String userID = "";
+
+            switch(event.getOption("username").getAsString()){
+                case "1"->  userID = OsuMembers.ONE.getUserID();
+                case "2"-> userID = OsuMembers.TWO.getUserID();
+                case "3"-> userID = OsuMembers.THREE.getUserID();
+                case "4"-> userID = OsuMembers.FOUR.getUserID();
+                case "5"-> userID = OsuMembers.FIVE.getUserID();
+                case "6"-> userID = OsuMembers.SIX.getUserID();
+            }
+
+
+
             try {
 
-                URL url = new URL("https://osu.ppy.sh/api/v2/users/"+ event.getOption("user-id").getAsString() + "/osu?key=id");
+                URL url = new URL("https://osu.ppy.sh/api/v2/users/"+ userID + "/osu?key=id");
 
                 StringBuilder returnResponse = new StringBuilder();
 
@@ -72,7 +78,8 @@ public class OsuApiCall {
                     MessageEmbed messageEmbed = new EmbedBuilder()
                             .setTitle(username + "'s Osu Stats")
                             .setColor(Color.magenta)
-                            .setImage(avatarUrl)
+                            .setThumbnail(avatarUrl)
+                            .setFooter("Official Osu Records, created by " + event.getJDA().getUserById(416342612484554752L).getName() )
                             .addField(new MessageEmbed.Field("PP", ppAmount, false))
                             .addField(new MessageEmbed.Field("User Level",userLevel,false ))
                             .addField(new MessageEmbed.Field("Global Ranking", globalRanking, false))

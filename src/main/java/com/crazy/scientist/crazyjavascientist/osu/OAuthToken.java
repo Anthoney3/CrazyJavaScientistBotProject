@@ -4,6 +4,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.net.URL;
@@ -16,6 +17,7 @@ import java.time.format.FormatStyle;
 import java.util.*;
 
 @Slf4j
+@Component
 public class OAuthToken  {
 
   private final Dotenv config = Dotenv.load();

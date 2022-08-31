@@ -32,6 +32,7 @@ import java.util.*;
 
 @Slf4j
 @NoArgsConstructor
+@Component
 public class GoogleSearch extends ListenerAdapter {
 
     public static List<String> imageUrls = new ArrayList<>();

@@ -1,9 +1,12 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
+import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
 import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -12,44 +15,47 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Slf4j
-@Data
 @Component
 public class CommandManager extends ListenerAdapter {
 
 
+    @Autowired
+    private FeedBackCommand feedBackCommand;
+    @Autowired
+    private HelpMessage helpMessage;
+    @Autowired
+    private GoogleSearch googleSearch;
+    @Autowired
+    private ShutdownBot shutdownBot;
+    @Autowired
+    private OsuApiCall osuApiCall;
+    @Autowired
+    private TaskManager taskManager;
 
-    private FeedBackCommand feedBackCommand = new FeedBackCommand();
-    private HelpMessage helpMessage = new HelpMessage();
-    private GoogleSearch googleSearch = new GoogleSearch();
-    private ShutdownBot shutdownBot = new ShutdownBot();
-    private OsuApiCall osuApiCall = new OsuApiCall();
 
 
-    private List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
+    private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
             .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
-            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot")));
-    private List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats","Gets a user's stats for osu").addOption(OptionType.STRING,"username","Uses the users server name to search for stats; Ex. 1 searches for 1's stats",true)));
+            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot")
+            ));
+    private final List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats","Gets a user's stats for osu").addOption(OptionType.STRING,"username","Uses the users server name to search for stats; Ex. 1 searches for 1's stats",true)));
 
 
-    private List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
+    private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
             .addOption(OptionType.STRING,"message-id","The message id of what you wish to showcase", true),
             Commands.slash("get-message-history","Shows Server Message History.")
                     .addOption(OptionType.STRING,"msg-id","ID of the message you wish to find",true),
             Commands.slash("search","Google Search: In testing").addOption(OptionType.STRING,"prompt","what images you're looking for",true),
             Commands.slash("logout","Kills the bot and shuts it down"),
             Commands.slash("get-search-history","Retrieves the bots google search history")));
-    public CommandManager() {
-
-    }
-
-
-
 
 
     public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, GoogleSearch googleSearch, ShutdownBot shutdownBot) {
@@ -80,8 +86,10 @@ public class CommandManager extends ListenerAdapter {
                     case "search" -> googleSearch.onSearchCommand(event);
                     case "logout" -> shutdownBot.shutdownBot(event);
                     case "get-osu-stats" -> osuApiCall.makeOsuAPICall(event);
+                    case "create-task-list" -> taskManager.createNewUserList(event);
                     default -> {
                        /* if (command.equalsIgnoreCase("get-message-history")) {
+
 
 
                             Message lastMessage = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("msg-id")).getAsString()).complete();
@@ -132,7 +140,7 @@ public class CommandManager extends ListenerAdapter {
             }
             }catch(Exception e){
 
-                event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
+//                event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
                 e.printStackTrace();
             }
 
@@ -156,9 +164,24 @@ public class CommandManager extends ListenerAdapter {
 
     }
 
-    @Override
-    public void onGuildJoin(@NotNull GuildJoinEvent event) {
-       event.getGuild().updateCommands().addCommands(this.globalCommands).queue();
-    }
 
+    @Override
+    public void onReady(@NotNull ReadyEvent event) {
+
+        OptionData statusOption = new OptionData(OptionType.STRING,"status","The status of completion for the first task",false)
+                .addChoice("Not Started", TaskManagerStatus.NOT_STARTED.getStatus())
+                .addChoice("In Progress",TaskManagerStatus.IN_PROGRESS.getStatus())
+                .addChoice("Completed",TaskManagerStatus.COMPLETED.getStatus());
+
+
+        globalCommands.add(Commands.slash("create-task-list","Allows you to create a Task List where you can store any tasks you may need to do")
+                .addOption(OptionType.STRING,"title","The title for the Task List",true)
+                .addOption(OptionType.STRING,"description","The description for the first task",false)
+                .addOptions(statusOption)
+                .addOption(OptionType.STRING,"comments","Allows you to add a comment to the task, good for when a task is in progress and has an update",false));
+
+
+
+        event.getJDA().updateCommands().addCommands(this.globalCommands).queue();
+    }
 }

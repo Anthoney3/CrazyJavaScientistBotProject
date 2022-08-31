@@ -14,6 +14,7 @@ import java.time.LocalDate;
 
 @NoArgsConstructor
 @Slf4j
+@Component
 public class ShutdownBot extends ListenerAdapter {
 
     public void shutdownBot(@Nonnull SlashCommandInteraction event){

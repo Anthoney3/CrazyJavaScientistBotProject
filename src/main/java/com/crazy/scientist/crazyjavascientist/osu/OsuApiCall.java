@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 import org.json.JSONObject;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
@@ -17,6 +18,7 @@ import java.text.NumberFormat;
 import java.util.Objects;
 
 @Slf4j
+@Component
 public class OsuApiCall {
 
 
@@ -65,6 +67,7 @@ public class OsuApiCall {
                 }
 
                 JSONObject responseObject = new JSONObject(returnResponse.toString());
+
 
                 if (!responseObject.isEmpty()) {
 

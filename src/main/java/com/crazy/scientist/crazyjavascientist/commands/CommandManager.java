@@ -1,7 +1,9 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
+import com.crazy.scientist.crazyjavascientist.models.UserTaskTable;
 import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,11 +42,16 @@ public class CommandManager extends ListenerAdapter {
     @Autowired
     private TaskManager taskManager;
 
+    @Autowired
+    private UserTaskTableI userTaskTableI;
+
 
 
     private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
             .addOption(OptionType.BOOLEAN,"email","Sends an email to the bot owner with the feedback given",true),
-            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot")
+            Commands.slash("help","Shows a list of commands for Crazy Java Scientist bot"),
+            Commands.slash("delete-task-list","Allows you to delete a task list by its title")
+                    .addOption(OptionType.STRING,"title","The title of the task list you wish to delete",true)
             ));
     private final List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats","Gets a user's stats for osu").addOption(OptionType.STRING,"username","Uses the users server name to search for stats; Ex. 1 searches for 1's stats",true)));
 
@@ -87,6 +94,7 @@ public class CommandManager extends ListenerAdapter {
                     case "logout" -> shutdownBot.shutdownBot(event);
                     case "get-osu-stats" -> osuApiCall.makeOsuAPICall(event);
                     case "create-task-list" -> taskManager.createNewUserList(event);
+                    case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(event);
                     default -> {
                        /* if (command.equalsIgnoreCase("get-message-history")) {
 
@@ -158,7 +166,10 @@ public class CommandManager extends ListenerAdapter {
     public void onGuildReady(@NotNull GuildReadyEvent event) {
 
         switch(event.getGuild().getName()){
-            case "The Java Way"-> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+            case "The Java Way"-> {
+                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+            }
             case "Osu Chads"-> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
         }
 
@@ -175,10 +186,13 @@ public class CommandManager extends ListenerAdapter {
 
 
         globalCommands.add(Commands.slash("create-task-list","Allows you to create a Task List where you can store any tasks you may need to do")
-                .addOption(OptionType.STRING,"title","The title for the Task List",true)
+                .addOption(OptionType.STRING,"title","The title for the Task List",false)
                 .addOption(OptionType.STRING,"description","The description for the first task",false)
                 .addOptions(statusOption)
                 .addOption(OptionType.STRING,"comments","Allows you to add a comment to the task, good for when a task is in progress and has an update",false));
+
+
+
 
 
 

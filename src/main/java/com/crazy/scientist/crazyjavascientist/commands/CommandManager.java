@@ -90,26 +90,6 @@ public class CommandManager extends ListenerAdapter {
                 case "create-task-list" -> taskManager.createNewUserList(isAllowedToUseCommand, event);
                 case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(isAllowedToUseCommand, event);
                 default -> {
-                       /* if (command.equalsIgnoreCase("get-message-history")) {
-
-
-
-                            Message lastMessage = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("msg-id")).getAsString()).complete();
-
-                            if (lastMessage.getReferencedMessage() == null) {
-                                if (lastMessage.getAttachments().isEmpty()) {
-                                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getJumpUrl()).queue();
-                                } else {
-                                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                                    log.info(lastMessage.toString());
-                                }
-                            } else {
-                                event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                                log.info(lastMessage.toString());
-                            }
-
-
-                        }*/
                     if (command.equalsIgnoreCase("add-to-showcase")) {
 
 

@@ -34,6 +34,7 @@ import java.util.Map;
 
 
 @NoArgsConstructor
+@Component
 public class FeedBackCommand extends ListenerAdapter {
 
 

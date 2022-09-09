@@ -32,19 +32,18 @@ import java.util.*;
 
 @Slf4j
 @NoArgsConstructor
+@Component
 public class GoogleSearch extends ListenerAdapter {
 
     public static List<String> imageUrls = new ArrayList<>();
     public static List<UserHistoryItem> history = new ArrayList<>();
-    private  int imageNum = 1;
+    private int imageNum = 1;
 
 
     public void onNextCall(@NotNull MessageReceivedEvent event) {
 
 
-
-        if(event.getMessage().getContentStripped().matches("!next")){
-
+        if (event.getMessage().getContentStripped().matches("!next")) {
 
 
             EmbedBuilder responseMessage = new EmbedBuilder();
@@ -64,9 +63,9 @@ public class GoogleSearch extends ListenerAdapter {
         }
     }
 
-    public void onSearchHistoryCommand(@Nonnull SlashCommandInteraction event){
+    public void onSearchHistoryCommand(boolean hasPermission, @Nonnull SlashCommandInteraction event) {
 
-        if(event.getName().equalsIgnoreCase("get-search-history")) {
+        if (event.getName().equalsIgnoreCase("get-search-history") && hasPermission) {
 
             if (history.isEmpty()) {
 
@@ -76,40 +75,39 @@ public class GoogleSearch extends ListenerAdapter {
                 EmbedBuilder builder = new EmbedBuilder()
                         .setTitle("Bot Google Search History");
 
-               history.forEach(item ->{
+                history.forEach(item -> {
 
-                   builder.addField(item.getUserName(),item.getSearchPrompt(),false);
+                    builder.addField(item.getUserName(), item.getSearchPrompt(), false);
 
-               });
-
-
+                });
 
 
                 MessageEmbed messageEmbed = builder.build();
 
 
-
                 event.replyEmbeds(messageEmbed).queue();
             }
-        }
+        }else{
+        event.replyFormat("You are not allowed to use slash commands%n Please reach out to  %s  and he can allow you to use commands ", event.getJDA().getUserById(416342612484554752L).getName()).queue();
+    }
     }
 
-    public void onSearchCommand(@Nonnull SlashCommandInteraction event) {
+    public void onSearchCommand(boolean hasPermission, @Nonnull SlashCommandInteraction event) {
 
 
-        if(event.getName().equalsIgnoreCase("search")){
+        if (event.getName().equalsIgnoreCase("search") && hasPermission) {
 
             imageUrls.clear();
             try {
 
-                String commandStringSanitized =  event.getCommandString().replace("/search prompt:","").replace(" ", "%20");
+                String commandStringSanitized = event.getCommandString().replace("/search prompt:", "").replace(" ", "%20");
 
-                history.add(new UserHistoryItem(event.getUser().getName(),commandStringSanitized.replaceAll("%20"," ") ));
+                history.add(new UserHistoryItem(event.getUser().getName(), commandStringSanitized.replaceAll("%20", " ")));
 
                 log.info(event.getCommandString());
 
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://google-image-search1.p.rapidapi.com/v2/?q="+commandStringSanitized + "&hl=en"))
+                        .uri(URI.create("https://google-image-search1.p.rapidapi.com/v2/?q=" + commandStringSanitized + "&hl=en"))
                         .header("X-RapidAPI-Key", "d3df70e112mshecb68b37e756f03p1238d6jsnd9f6c87c3a02")
                         .header("X-RapidAPI-Host", "google-image-search1.p.rapidapi.com")
                         .method("GET", HttpRequest.BodyPublishers.noBody())
@@ -119,17 +117,15 @@ public class GoogleSearch extends ListenerAdapter {
                 JSONObject beforeJSONArray = new JSONObject(response.body());
 
 
+                JSONArray incomingJson = new JSONArray(beforeJSONArray.getJSONObject("response").getJSONArray("images"));
 
 
-               JSONArray incomingJson = new JSONArray(beforeJSONArray.getJSONObject("response").getJSONArray("images"));
+                for (int i = 0; i < incomingJson.length(); i++) {
 
 
-               for(int i=0; i<incomingJson.length();i++){
+                    imageUrls.add(incomingJson.getJSONObject(i).getJSONObject("image").getString("url"));
 
-
-                   imageUrls.add(incomingJson.getJSONObject(i).getJSONObject("image").getString("url"));
-
-               }
+                }
 
                 EmbedBuilder responseMessage = new EmbedBuilder();
 
@@ -141,38 +137,25 @@ public class GoogleSearch extends ListenerAdapter {
 
                 EmbedBuilder embedBuilder = new EmbedBuilder().setTitle("First 10 Image Results:" + commandStringSanitized.replaceAll("%20", " "));
 
-                for(int i=0;i < 10;i++){
+                for (int i = 0; i < 10; i++) {
 
                     images.add(new EmbedBuilder().setImage(imageUrls.get(i)).build());
                 }
 
 
+                for (int i = 0; i < 10; i++) {
 
-
-
-
-
-
-
-
-                for(int i=0; i < 10; i++){
-
-                  embedBuilder.addField("Image" + (i + 1) + ": ", imageUrls.get(i) + "\n\n",false);
+                    embedBuilder.addField("Image" + (i + 1) + ": ", imageUrls.get(i) + "\n\n", false);
                 }
+                event.replyEmbeds(images).queue();
 
-
-
-
-
-                              event.replyEmbeds(images).queue();
-
-
-
-            }catch (Exception e){
+            } catch (Exception e) {
 
                 event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
                 e.printStackTrace();
             }
+        }else{
+            event.replyFormat("You are not allowed to use slash commands%n Please reach out to  %s  and he can allow you to use commands ", event.getJDA().getUserById(416342612484554752L).getName()).queue();
         }
 
     }

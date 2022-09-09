@@ -9,49 +9,59 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.managers.GuildManager;
+import net.dv8tion.jda.api.managers.Manager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 
 @Slf4j
 @Data
+@Component
 public class DiscordBotConfigJDAStyle {
 
-    private final Dotenv config;
+    private Dotenv config;
 
-    private final ShardManager shardManager ;
+    private ShardManager shardManager ;
 
-    private OAuthToken oAuthToken = new OAuthToken();
+    @Autowired
+    private OAuthToken oAuthToken;
 
+    @Autowired
+    private CommandManager commandManager;
 
-    public DiscordBotConfigJDAStyle() throws LoginException, IOException {
+    @Autowired
+    private MessageEventListeners messageEventListeners;
+
+    @Autowired
+    private Greetings greetings;
+
+    public  void init() throws IOException, LoginException {
 
         config = Dotenv.configure().load();
 
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
         builder.setStatus(OnlineStatus.ONLINE);
         builder.setActivity(Activity.watching("Yo Momma Pole Dance"));
-        builder.enableIntents(GatewayIntent.GUILD_MEMBERS,GatewayIntent.GUILD_MESSAGES,GatewayIntent.GUILD_MESSAGE_TYPING);
+        builder.enableIntents(GatewayIntent.GUILD_MEMBERS,GatewayIntent.GUILD_MESSAGES,GatewayIntent.GUILD_MESSAGE_TYPING,GatewayIntent.GUILD_PRESENCES);
 
 
        shardManager = builder.build();
 
-       shardManager.addEventListener(new CommandManager(), new MessageEventListeners(), new Greetings());
-
-       oAuthToken.getOsuOAuthToken(shardManager);
-       oAuthToken.renewOsuOAuthToken(shardManager);
-
-/*
-
-           while(shardManager.getUserById(1010627603352256543L).getJDA().getStatus() == "")
-           new OAuthToken().renewOsuOAuthToken(shardManager);
-*/
+        shardManager.addEventListener(commandManager, messageEventListeners, greetings);
 
 
+
+
+        oAuthToken.getOsuOAuthToken(shardManager);
+        oAuthToken.renewOsuOAuthToken(shardManager);
 
     }
+
 
 }

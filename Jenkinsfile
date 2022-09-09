@@ -13,7 +13,7 @@ pipeline {
     }
     stage('Remove Old Jar'){
        steps{
-         sh 'ps | grep cjs.jar | awk '{print $2}' | xargs kill -9 || true'
+         sh 'ps -ef | grep cjs.jar | awk \'{print $2}\' | xargs kill -9 || true'
         }
     }
     stage('archive') {

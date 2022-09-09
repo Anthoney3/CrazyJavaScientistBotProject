@@ -117,8 +117,6 @@ public class CommandManager extends ListenerAdapter {
                 }
             }
 
-
-
         } catch (Exception e) {
 
                 event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();

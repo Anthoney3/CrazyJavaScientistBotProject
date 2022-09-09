@@ -134,7 +134,7 @@ public class CommandManager extends ListenerAdapter {
                             textChannel1.sendMessageFormat("%s%n%s", messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
                         }
                     }
-                }
+                }aw
             }
 
 

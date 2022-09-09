@@ -69,7 +69,6 @@ public class OAuthToken  {
 
                 JSONObject responseObject = new JSONObject(builder.toString());
 
-                Files.writeString(Paths.get(System.getProperty("user.home")+"/"+"response.json"), responseObject.toString());
 
                 if(!responseObject.isEmpty()) {
 

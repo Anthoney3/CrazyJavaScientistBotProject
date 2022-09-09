@@ -1,8 +1,6 @@
 package com.crazy.scientist.crazyjavascientist.enums;
 
-import lombok.Data;
 import lombok.Getter;
-import org.springframework.web.bind.annotation.GetMapping;
 
 @Getter
 public enum TaskManagerStatus {

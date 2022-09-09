@@ -17,7 +17,9 @@ import java.time.LocalDate;
 @Component
 public class ShutdownBot extends ListenerAdapter {
 
-    public void shutdownBot(@Nonnull SlashCommandInteraction event){
+    public void shutdownBot(boolean hasPermission,@Nonnull SlashCommandInteraction event){
+
+        if(hasPermission) {
 
             event.reply("Shutting down...").queue();
             log.info("Bot Shutting down...");
@@ -26,6 +28,9 @@ public class ShutdownBot extends ListenerAdapter {
             log.info("Bot Shutdown at :{}", Timestamp.from(Instant.now()));
 
             System.exit(0);
+        }else{
+            event.replyFormat("You are not allowed to use slash commands%n Please reach out to  %s  and he can allow you to use commands ", event.getJDA().getUserById(416342612484554752L).getName()).queue();
+        }
 
 
     }

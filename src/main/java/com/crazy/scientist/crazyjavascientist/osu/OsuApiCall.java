@@ -198,8 +198,6 @@ public class OsuApiCall {
                                 updatedRequest.setHitAcc(hitAccNonFormatted);
                             }
 
-                            log.info("Total Chokes Amount: {}", lastRequest.getTotalChokes());
-
                             totalChokesNonFormatted = 6;
 
                             if (lastRequest.getTotalChokes() < totalChokesNonFormatted) {

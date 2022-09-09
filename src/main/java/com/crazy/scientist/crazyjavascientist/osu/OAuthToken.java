@@ -4,11 +4,13 @@ import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.*;
@@ -22,11 +24,10 @@ public class OAuthToken  {
 
   private final Dotenv config = Dotenv.load();
   private Timer timer = new Timer();
-
-  public static String token;
-  public static ZonedDateTime tokenRenewalTime;
   private ZonedDateTime nextRenewalTime;
 
+  @Autowired
+  private OsuTokenModelI osuTokenModelI;
 
     public void getOsuOAuthToken(ShardManager event) throws IOException {
 
@@ -72,13 +73,18 @@ public class OAuthToken  {
 
                 if(!responseObject.isEmpty()) {
 
-                    tokenRenewalTime = ZonedDateTime.now();
+                    OsuTokenModel tokenObject = new OsuTokenModel();
+
+
+                    tokenObject.setTokenRenewalTime(ZonedDateTime.now());
 
                     log.info("The Token Retrieved Successfully");
                     log.info("The Token Expires in :{} hours", Integer.parseInt(responseObject.get("expires_in").toString())/3600);
                     log.info("The Token Type is :{}", responseObject.get("token_type"));
 
-                    OAuthToken.token = responseObject.get("access_token").toString();
+                    tokenObject.setToken(responseObject.get("access_token").toString().getBytes(StandardCharsets.UTF_8));
+
+                    osuTokenModelI.save(tokenObject);
 
                 }else{
                     throw new RuntimeException("Response Object Returned Empty");
@@ -105,7 +111,7 @@ public class OAuthToken  {
     public void renewOsuOAuthToken(ShardManager manager) throws IOException {
 
 
-        nextRenewalTime = tokenRenewalTime.plusDays(1L).minusHours(1L);
+        nextRenewalTime = osuTokenModelI.retrieveTokenObjectInstance().getTokenRenewalTime().plusDays(1L).minusHours(1L);
 
         log.info("Task Scheduled to renew token on: {}", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(nextRenewalTime));
 
@@ -150,14 +156,18 @@ public class OAuthToken  {
 
                     if (!responseObject.isEmpty()) {
 
-                        tokenRenewalTime = ZonedDateTime.now();
+                        OsuTokenModel renewedTokenObject = new OsuTokenModel();
+
+                        renewedTokenObject.setTokenRenewalTime(ZonedDateTime.now());
 
                         log.info("Token Renewed Successfully");
-                        log.info("Token Renewed at : {}", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(tokenRenewalTime));
+                        log.info("Token Renewed at : {}", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).format(renewedTokenObject.getTokenRenewalTime()));
                         log.info("The Token Expires in :{} hours", Integer.parseInt(responseObject.get("expires_in").toString()) / 3600);
                         log.info("The Token Type is :{}", responseObject.get("token_type"));
 
-                        OAuthToken.token = responseObject.get("access_token").toString();
+                        renewedTokenObject.setToken(responseObject.get("access_token").toString().getBytes(StandardCharsets.UTF_8));
+
+                        osuTokenModelI.updateTokenAndRenewalTime(renewedTokenObject.getToken(), renewedTokenObject.getTokenRenewalTime());
 
 
                     } else {

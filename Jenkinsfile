@@ -13,7 +13,7 @@ pipeline {
     }
     stage('Remove Old Jar'){
        steps{
-         sh 'ps -ef | grep cjs.jar | awk \'{print $2}\' | xargs kill -9 || true'
+         sh 'ps -ef | grep CrazyJavaScientist-0.0.1-SNAPSHOT-plain.jar | awk \'{print $2}\' | xargs kill -9 || true'
         }
     }
     stage('archive') {

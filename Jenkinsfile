@@ -12,19 +12,19 @@ pipeline {
       }
     }
     stage('Remove Old Jar'){
-        steps{
-        sh 'ps | grep cjs.jar | awk '{print $2}' | xargs kill -9 || true'
+       steps{
+         sh 'ps | grep cjs.jar | awk '{print $2}' | xargs kill -9 || true'
         }
-        }
+    }
     stage('archive') {
-      steps {
+       steps {
         archiveArtifacts(artifacts: '**/*.jar', followSymlinks: false)
       }
+    }
+    stage('Deploy New Jar'){
+       steps{
+          sh 'nohup java -jar /var/lib/jenkins/jobs/Discord Bot Deployment/builds/${BUILD_NUMBER}/archive/build/libs/CrazyJavaScientist-0.0.1-SNAPSHOT-plain.jar &'
       }
-      stage('Deploy New Jar'){
-      steps{
-      sh 'nohup java -jar /var/lib/jenkins/jobs/Discord Bot Deployment/builds/${BUILD_NUMBER}/archive/build/libs/CrazyJavaScientist-0.0.1-SNAPSHOT-plain.jar &'
-      }
-      }
+    }
   }
 }

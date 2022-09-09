@@ -23,7 +23,7 @@ pipeline {
     }
     stage('Deploy New Jar'){
        steps{
-          sh 'nohup java -jar /var/lib/jenkins/jobs/'Discord Bot Deployment'/builds/${BUILD_NUMBER}/archive/build/libs/CrazyJavaScientist-0.0.1-SNAPSHOT-plain.jar &'
+          sh 'nohup java -jar /var/lib/jenkins/jobs/\'Discord Bot Deployment\'/builds/${BUILD_NUMBER}/archive/build/libs/CrazyJavaScientist-0.0.1-SNAPSHOT-plain.jar &'
       }
     }
   }

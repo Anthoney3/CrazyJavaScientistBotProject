@@ -158,13 +158,13 @@ public class OsuApiCall {
                                 double positivePPAmount = ppAmountNonFormatted - lastRequest.getPp();
                                 builder.addField(new MessageEmbed.Field("PP", ppAmount + "```diff\n+" + DecimalFormat.getInstance().format(positivePPAmount) + "```", true));
                                 updatedRequest.setPp(ppAmountNonFormatted);
-                            }
-
-                            if (lastRequest.getPp() > ppAmountNonFormatted) {
+                            } else if (lastRequest.getPp() > ppAmountNonFormatted) {
 
                                 double negativePPAmount = lastRequest.getPp() - ppAmountNonFormatted;
                                 builder.addField(new MessageEmbed.Field("PP", ppAmount + "```diff\n-" + DecimalFormat.getInstance().format(negativePPAmount) + "```", true));
                                 updatedRequest.setPp(ppAmountNonFormatted);
+                            } else {
+                                builder.addField(new MessageEmbed.Field("PP", ppAmount, true));
                             }
 
                             builder.addField(new MessageEmbed.Field("Total Time Played", totalTimePlayed, true));
@@ -175,30 +175,29 @@ public class OsuApiCall {
                                 int negativeGlobalRanking = globalRankingNonFormatted - lastRequest.getGlobalRanking();
                                 builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking + "```diff\n+" + DecimalFormat.getInstance().format(negativeGlobalRanking) + "```", true));
                                 updatedRequest.setGlobalRanking(globalRankingNonFormatted);
-                            }
-
-                            if (lastRequest.getGlobalRanking() > globalRankingNonFormatted) {
+                            } else if (lastRequest.getGlobalRanking() > globalRankingNonFormatted) {
 
                                 int positiveGlobalRanking = lastRequest.getGlobalRanking() - globalRankingNonFormatted;
                                 builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking + "```diff\n-" + DecimalFormat.getInstance().format(positiveGlobalRanking) + "```", true));
                                 updatedRequest.setGlobalRanking(globalRankingNonFormatted);
+                            } else {
+                                builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking, true));
                             }
 
                             if (lastRequest.getHitAcc() < hitAccNonFormatted) {
 
-                                double negativeHitAccAmount = hitAccNonFormatted - lastRequest.getTotalChokes();
-                                builder.addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy + "```diff\n-%" + DecimalFormat.getInstance().format(negativeHitAccAmount) + "```", true));
-                                updatedRequest.setHitAcc(hitAccNonFormatted);
-                            }
-
-                            if (lastRequest.getHitAcc() > hitAccNonFormatted) {
-
-                                double positiveHitAccAmount = lastRequest.getHitAcc() - hitAccNonFormatted;
+                                double positiveHitAccAmount = hitAccNonFormatted - lastRequest.getHitAcc();
                                 builder.addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy + "```diff\n+%" + DecimalFormat.getInstance().format(positiveHitAccAmount) + "```", true));
                                 updatedRequest.setHitAcc(hitAccNonFormatted);
-                            }
+                            } else if (lastRequest.getHitAcc() > hitAccNonFormatted) {
 
-                            totalChokesNonFormatted = 6;
+                                double negativeHitAccAmount = lastRequest.getHitAcc() - hitAccNonFormatted;
+                                builder.addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy + "```diff\n-%" + DecimalFormat.getInstance().format(negativeHitAccAmount) + "```", true));
+                                updatedRequest.setHitAcc(hitAccNonFormatted);
+                            } else {
+
+                                builder.addField((new MessageEmbed.Field("Hit Accuracy", hitAccuracy, true)));
+                            }
 
                             if (lastRequest.getTotalChokes() < totalChokesNonFormatted) {
 

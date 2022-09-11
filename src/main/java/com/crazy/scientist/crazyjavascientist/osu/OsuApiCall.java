@@ -62,6 +62,7 @@ public class OsuApiCall {
             if (sendAPICall) {
 
                 try {
+                    log.info(userID);
 
                     URL url = new URL("https://osu.ppy.sh/api/v2/users/" + userID + "/osu?key=id");
 
@@ -100,11 +101,17 @@ public class OsuApiCall {
                         int mins = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) % 3600) / 60;
                         int days = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) / 3600) / 24;
 
+                        log.info(responseObject.getJSONObject("statistics").get("global_rank").toString());
+
 
                         double ppAmountNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("pp").toString());
                         int totalChokesNonFormatted = Integer.parseInt(responseObject.getJSONObject("statistics").getJSONObject("grade_counts").get("sh").toString());
                         int monthlyPlayCountsUnformatted = 0;
-                        int globalRankingNonFormatted = Integer.parseInt(responseObject.getJSONObject("statistics").get("global_rank").toString());
+                        int globalRankingNonFormatted = (!responseObject.getJSONObject("statistics").get("global_rank").toString().equalsIgnoreCase("null"))
+                                ? Integer.parseInt(responseObject.getJSONObject("statistics").get("global_rank").toString()) : 0;
+
+
+
                         double hitAccNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("hit_accuracy").toString());
 
 
@@ -113,7 +120,7 @@ public class OsuApiCall {
                         String totalChokes = responseObject.getJSONObject("statistics").getJSONObject("grade_counts").get("sh").toString();
                         String monthlyPlayCounts = "";
                         String totalTimePlayed = String.format("%01dd %2dh %02dm", days, hours, mins);
-                        String globalRanking = NumberFormat.getNumberInstance().format(responseObject.getJSONObject("statistics").get("global_rank"));
+                        String globalRanking = (!responseObject.getJSONObject("statistics").get("global_rank").toString().equalsIgnoreCase("null")) ? NumberFormat.getNumberInstance().format(responseObject.getJSONObject("statistics").get("global_rank")) : "No Global Rank Found";
                         String hitAccuracy = "%" + responseObject.getJSONObject("statistics").get("hit_accuracy").toString();
                         String avatarUrl = responseObject.get("avatar_url").toString();
 
@@ -248,6 +255,7 @@ public class OsuApiCall {
                     }
                 } catch (Exception e) {
                     log.error("An Error Occurred during an API call to Osu :{}", e.getLocalizedMessage());
+                    e.printStackTrace();
                     Objects.requireNonNull(event.getJDA().getUserById(416342612484554752L)).openPrivateChannel().queue(user -> {
 
                         user.sendMessageFormat("An Error Occurred during an API call to Osu %n%s%n%s", e.getLocalizedMessage(), e.getMessage()).queue();

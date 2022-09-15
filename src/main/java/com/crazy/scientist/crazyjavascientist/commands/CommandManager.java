@@ -138,8 +138,8 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
         }

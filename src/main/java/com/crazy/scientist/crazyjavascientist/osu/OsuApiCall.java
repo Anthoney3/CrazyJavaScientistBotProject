@@ -14,8 +14,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -62,33 +66,9 @@ public class OsuApiCall {
             if (sendAPICall) {
 
                 try {
-                    log.info(userID);
-
-                    URL url = new URL("https://osu.ppy.sh/api/v2/users/" + userID + "/osu?key=id");
-
-                    StringBuilder returnResponse = new StringBuilder();
 
 
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-                    connection.setRequestMethod("GET");
-                    connection.setRequestProperty("Content-Type", "application/json");
-                    connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
-
-
-                    try (BufferedReader bf = new BufferedReader(new InputStreamReader(
-                            connection.getInputStream()))) {
-                        String line;
-                        while ((line = bf.readLine()) != null) {
-
-                            returnResponse.append(line);
-
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    JSONObject responseObject = new JSONObject(returnResponse.toString());
+                    JSONObject responseObject = new JSONObject(getOsuStatsAPICall(userID));
 
 
                     if (!responseObject.isEmpty()) {
@@ -101,15 +81,12 @@ public class OsuApiCall {
                         int mins = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) % 3600) / 60;
                         int days = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) / 3600) / 24;
 
-                        log.info(responseObject.getJSONObject("statistics").get("global_rank").toString());
-
 
                         double ppAmountNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("pp").toString());
                         int totalChokesNonFormatted = Integer.parseInt(responseObject.getJSONObject("statistics").getJSONObject("grade_counts").get("sh").toString());
                         int monthlyPlayCountsUnformatted = 0;
                         int globalRankingNonFormatted = (!responseObject.getJSONObject("statistics").get("global_rank").toString().equalsIgnoreCase("null"))
                                 ? Integer.parseInt(responseObject.getJSONObject("statistics").get("global_rank").toString()) : 0;
-
 
 
                         double hitAccNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("hit_accuracy").toString());
@@ -268,6 +245,202 @@ public class OsuApiCall {
             }
         }
     }
+
+
+    public void populateDBOnStartWithOsuRecords() {
+
+        List<OsuMembers> osuMembers = new ArrayList<>();
+
+        osuMembers.add(OsuMembers.ONE);
+        osuMembers.add(OsuMembers.TWO);
+        osuMembers.add(OsuMembers.THREE);
+        osuMembers.add(OsuMembers.FOUR);
+        osuMembers.add(OsuMembers.FIVE);
+        osuMembers.add(OsuMembers.SIX);
+
+        for (OsuMembers osuMember : osuMembers) {
+
+            try {
+
+
+                JSONObject responseObject = new JSONObject(getOsuStatsAPICall(osuMember.getUserID()));
+
+
+                if (!responseObject.isEmpty()) {
+
+                    String month = (LocalDate.now().getMonthValue() < 10) ? ("0" + LocalDate.now().getMonthValue()) : String.valueOf(LocalDate.now().getMonthValue());
+                    int year = LocalDate.now().getYear();
+                    int hours = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) / 3600) % 24;
+                    int mins = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) % 3600) / 60;
+                    int days = (Integer.parseInt(responseObject.getJSONObject("statistics").get("play_time").toString()) / 3600) / 24;
+                    double ppAmountNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("pp").toString());
+                    int totalChokesNonFormatted = Integer.parseInt(responseObject.getJSONObject("statistics").getJSONObject("grade_counts").get("sh").toString());
+                    int monthlyPlayCountsUnformatted = 0;
+                    int globalRankingNonFormatted = (!responseObject.getJSONObject("statistics").get("global_rank").toString().equalsIgnoreCase("null"))
+                            ? Integer.parseInt(responseObject.getJSONObject("statistics").get("global_rank").toString()) : 0;
+                    double hitAccNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("hit_accuracy").toString());
+
+                    String username = responseObject.get("username").toString();
+                    String totalTimePlayed = String.format("%01dd %2dh %02dm", days, hours, mins);
+
+                    for (Object o : responseObject.getJSONArray("monthly_playcounts")) {
+
+                        JSONObject playCount = (JSONObject) o;
+
+                        if (playCount.get("start_date").equals(year + "-" + month + "-01")) {
+                            monthlyPlayCountsUnformatted = Integer.parseInt(playCount.get("count").toString());
+
+                        }
+
+                    }
+
+                    OsuApiModel lastRequest = osuApiModelI.getLastRequestByOsuUsername(username);
+
+                    if (lastRequest == null) {
+                        osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted, ZonedDateTime.now()));
+                        log.info("{} added to the DB Successfully",username);
+                    }
+                    /*if (lastRequest != null && (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted)) {
+
+                        OsuApiModel updatedRequest = new OsuApiModel();
+
+
+                        if (lastRequest.getPp() < ppAmountNonFormatted) {
+                            updatedRequest.setPp(ppAmountNonFormatted);
+                        }
+                        if (lastRequest.getPp() > ppAmountNonFormatted) {
+                            updatedRequest.setPp(ppAmountNonFormatted);
+                        }
+
+
+                        if (lastRequest.getGlobalRanking() < globalRankingNonFormatted) {
+                            updatedRequest.setGlobalRanking(globalRankingNonFormatted);
+                        }
+                        if (lastRequest.getGlobalRanking() > globalRankingNonFormatted) {
+                            updatedRequest.setGlobalRanking(globalRankingNonFormatted);
+                        }
+
+                        if (lastRequest.getHitAcc() < hitAccNonFormatted) {
+                            updatedRequest.setHitAcc(hitAccNonFormatted);
+                        }
+                        if (lastRequest.getHitAcc() > hitAccNonFormatted) {
+                            updatedRequest.setHitAcc(hitAccNonFormatted);
+                        }
+
+                        if (lastRequest.getTotalChokes() < totalChokesNonFormatted) {
+                            updatedRequest.setTotalChokes(totalChokesNonFormatted);
+                        }
+                        osuApiModelI.updateLastRequestWithChangedOSUStats(username, ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
+
+
+
+                    }*/
+                } else {
+
+                    throw new RuntimeException("Response Object Returned Empty");
+                }
+            } catch (Exception e) {
+                log.error("An Error Occurred during an API call to Osu :{}", e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+        log.info("All Users Have been Added to the DB Successfully!");
+    }
+
+
+    public String getOsuStatsAPICall(String userID) throws IOException {
+
+        URL url = new URL("https://osu.ppy.sh/api/v2/users/" + userID + "/osu?key=id");
+
+        StringBuilder returnResponse = new StringBuilder();
+
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
+
+
+        try (BufferedReader bf = new BufferedReader(new InputStreamReader(
+                connection.getInputStream()))) {
+            String line;
+            while ((line = bf.readLine()) != null) {
+
+                returnResponse.append(line);
+
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return returnResponse.toString();
+    }
+
+   /* public String getOsuBestPlay(String userID) throws IOException {
+
+        URL bestPlayUrl = new URL("https://osu.ppy.sh/api/v2/users/" +userID+ "/scores/best?include_fails=0&mode=osu&limit=50&offset=1");
+
+        StringBuilder bestPlayResponse = new StringBuilder();
+
+        HttpURLConnection connection = (HttpURLConnection) bestPlayUrl.openConnection();
+
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
+
+
+        try (BufferedReader bf = new BufferedReader(new InputStreamReader(
+                connection.getInputStream()))) {
+            String line;
+            while ((line = bf.readLine()) != null) {
+
+                bestPlayResponse.append(line);
+
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Files.writeString(Paths.get(System.getProperty("user.home")+"/OsuApiCall.json"), bestPlayResponse.toString());
+
+        return bestPlayResponse.toString().substring(1,bestPlayResponse.length() -1);
+    }*/
+
+    /*public String getUsersById() throws IOException {
+
+        URL groupedUsers = new URL("https://osu.ppy.sh/api/v2/users?ids[21120079]");
+
+
+//                + OsuMembers.TWO.getUserID()  + "," + OsuMembers.THREE.getUserID()  + "," + OsuMembers.FOUR.getUserID()  + "," + OsuMembers.FIVE.getUserID()  + "," + OsuMembers.SIX.getUserID());
+        StringBuilder response = new StringBuilder();
+
+
+        HttpURLConnection connection = (HttpURLConnection) groupedUsers.openConnection();
+
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
+
+
+        try (BufferedReader bf = new BufferedReader(new InputStreamReader(
+                connection.getInputStream()))) {
+            String line;
+            while ((line = bf.readLine()) != null) {
+
+                response.append(line);
+
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        log.info("{}",response);
+
+        Files.writeString(Paths.get(System.getProperty("user.home")+"/OsuGetAllUsers.json"), response.toString());
+
+        return response.toString();
+
+    }*/
 
 
 }

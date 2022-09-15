@@ -4,6 +4,7 @@ import com.crazy.scientist.crazyjavascientist.osu.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
+import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,9 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private Greetings greetings;
 
+    @Autowired
+    private OsuApiCall osuApiCall;
+
     public  void init() throws IOException, LoginException {
 
         config = Dotenv.configure().load();
@@ -60,6 +64,7 @@ public class DiscordBotConfigJDAStyle {
 
         oAuthToken.getOsuOAuthToken(shardManager);
         oAuthToken.renewOsuOAuthToken(shardManager);
+        osuApiCall.populateDBOnStartWithOsuRecords();
 
     }
 

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Slf4j
+@Data
 @Component
 public class CommandManager extends ListenerAdapter {
 
@@ -44,6 +45,8 @@ public class CommandManager extends ListenerAdapter {
 
     @Autowired
     private UserTaskTableI userTaskTableI;
+
+
 
 
     private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
@@ -142,6 +145,7 @@ public class CommandManager extends ListenerAdapter {
 //                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+            case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
         }
 
     }

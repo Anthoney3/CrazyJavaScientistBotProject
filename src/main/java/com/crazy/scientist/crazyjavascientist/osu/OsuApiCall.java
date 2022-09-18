@@ -300,41 +300,6 @@ public class OsuApiCall {
                         osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted, ZonedDateTime.now()));
                         log.info("{} added to the DB Successfully",username);
                     }
-                    /*if (lastRequest != null && (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted)) {
-
-                        OsuApiModel updatedRequest = new OsuApiModel();
-
-
-                        if (lastRequest.getPp() < ppAmountNonFormatted) {
-                            updatedRequest.setPp(ppAmountNonFormatted);
-                        }
-                        if (lastRequest.getPp() > ppAmountNonFormatted) {
-                            updatedRequest.setPp(ppAmountNonFormatted);
-                        }
-
-
-                        if (lastRequest.getGlobalRanking() < globalRankingNonFormatted) {
-                            updatedRequest.setGlobalRanking(globalRankingNonFormatted);
-                        }
-                        if (lastRequest.getGlobalRanking() > globalRankingNonFormatted) {
-                            updatedRequest.setGlobalRanking(globalRankingNonFormatted);
-                        }
-
-                        if (lastRequest.getHitAcc() < hitAccNonFormatted) {
-                            updatedRequest.setHitAcc(hitAccNonFormatted);
-                        }
-                        if (lastRequest.getHitAcc() > hitAccNonFormatted) {
-                            updatedRequest.setHitAcc(hitAccNonFormatted);
-                        }
-
-                        if (lastRequest.getTotalChokes() < totalChokesNonFormatted) {
-                            updatedRequest.setTotalChokes(totalChokesNonFormatted);
-                        }
-                        osuApiModelI.updateLastRequestWithChangedOSUStats(username, ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
-
-
-
-                    }*/
                 } else {
 
                     throw new RuntimeException("Response Object Returned Empty");

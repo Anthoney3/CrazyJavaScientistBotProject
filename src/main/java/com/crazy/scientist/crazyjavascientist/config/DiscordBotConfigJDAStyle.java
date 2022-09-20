@@ -66,7 +66,6 @@ public class DiscordBotConfigJDAStyle {
         shardManager.addEventListener(commandManager, messageEventListeners, greetings);
 
         oAuthToken.getOsuOAuthToken(shardManager);
-        oAuthToken.renewOsuOAuthToken(shardManager);
         osuApiCall.populateDBOnStartWithOsuRecords();
 
     }

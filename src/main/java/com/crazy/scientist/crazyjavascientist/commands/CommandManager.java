@@ -1,15 +1,12 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
-import com.crazy.scientist.crazyjavascientist.models.UserTaskTable;
-import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.osu.api.OsuApiCall;
 import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

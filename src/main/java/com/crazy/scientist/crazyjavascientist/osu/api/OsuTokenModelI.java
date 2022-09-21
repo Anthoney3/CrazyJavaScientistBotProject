@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu;
+package com.crazy.scientist.crazyjavascientist.osu.api;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

@@ -1,10 +1,10 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
-import com.crazy.scientist.crazyjavascientist.osu.OAuthToken;
+import com.crazy.scientist.crazyjavascientist.osu.api.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
-import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.osu.api.OsuApiCall;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +13,6 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.managers.GuildManager;
-import net.dv8tion.jda.api.managers.Manager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;

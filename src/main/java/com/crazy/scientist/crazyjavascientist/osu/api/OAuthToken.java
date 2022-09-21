@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu;
+package com.crazy.scientist.crazyjavascientist.osu.api;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +12,6 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;

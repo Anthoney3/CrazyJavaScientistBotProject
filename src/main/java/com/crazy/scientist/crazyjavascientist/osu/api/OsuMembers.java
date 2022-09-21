@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu;
+package com.crazy.scientist.crazyjavascientist.osu.api;
 
 import lombok.Getter;
 

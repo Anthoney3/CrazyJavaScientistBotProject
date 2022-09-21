@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu;
+package com.crazy.scientist.crazyjavascientist.osu.api;
 
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -14,13 +14,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.*;
@@ -122,8 +117,7 @@ public class OsuApiCall {
 
                         if (lastRequest == null) {
                             osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted, ZonedDateTime.now()));
-                        }
-                        if (lastRequest != null && (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted)) {
+                        }else if (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted) {
 
                             builder = new EmbedBuilder()
                                     .setTitle(username + "'s Osu Stats")
@@ -142,11 +136,13 @@ public class OsuApiCall {
                                 double positivePPAmount = ppAmountNonFormatted - lastRequest.getPp();
                                 builder.addField(new MessageEmbed.Field("PP", ppAmount + "```diff\n+" + DecimalFormat.getInstance().format(positivePPAmount) + "```", true));
                                 updatedRequest.setPp(ppAmountNonFormatted);
+                                log.info("Positive Amount for PP was set to: {}", positivePPAmount);
                             } else if (lastRequest.getPp() > ppAmountNonFormatted) {
 
                                 double negativePPAmount = lastRequest.getPp() - ppAmountNonFormatted;
                                 builder.addField(new MessageEmbed.Field("PP", ppAmount + "```diff\n-" + DecimalFormat.getInstance().format(negativePPAmount) + "```", true));
                                 updatedRequest.setPp(ppAmountNonFormatted);
+                                log.info("Negative Amount for PP was set to: {}", negativePPAmount);
                             } else {
                                 builder.addField(new MessageEmbed.Field("PP", ppAmount, true));
                             }
@@ -159,11 +155,13 @@ public class OsuApiCall {
                                 int negativeGlobalRanking = globalRankingNonFormatted - lastRequest.getGlobalRanking();
                                 builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking + "```diff\n+" + DecimalFormat.getInstance().format(negativeGlobalRanking) + "```", true));
                                 updatedRequest.setGlobalRanking(globalRankingNonFormatted);
+                                log.info("Negative Amount for Global Ranking was set to: {}", negativeGlobalRanking);
                             } else if (lastRequest.getGlobalRanking() > globalRankingNonFormatted) {
 
                                 int positiveGlobalRanking = lastRequest.getGlobalRanking() - globalRankingNonFormatted;
                                 builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking + "```diff\n-" + DecimalFormat.getInstance().format(positiveGlobalRanking) + "```", true));
                                 updatedRequest.setGlobalRanking(globalRankingNonFormatted);
+                                log.info("Positive Amount for Global Ranking was set to: {}", positiveGlobalRanking);
                             } else {
                                 builder.addField(new MessageEmbed.Field("Global Ranking", globalRanking, true));
                             }
@@ -173,11 +171,13 @@ public class OsuApiCall {
                                 double positiveHitAccAmount = hitAccNonFormatted - lastRequest.getHitAcc();
                                 builder.addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy + "```diff\n+%" + DecimalFormat.getInstance().format(positiveHitAccAmount) + "```", true));
                                 updatedRequest.setHitAcc(hitAccNonFormatted);
+                                log.info("Positive Amount for Hit Acc was set to: {}", positiveHitAccAmount);
                             } else if (lastRequest.getHitAcc() > hitAccNonFormatted) {
 
                                 double negativeHitAccAmount = lastRequest.getHitAcc() - hitAccNonFormatted;
                                 builder.addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy + "```diff\n-%" + DecimalFormat.getInstance().format(negativeHitAccAmount) + "```", true));
                                 updatedRequest.setHitAcc(hitAccNonFormatted);
+                                log.info("Negative Amount for Hit Acc was set to: {}", negativeHitAccAmount);
                             } else {
 
                                 builder.addField((new MessageEmbed.Field("Hit Accuracy", hitAccuracy, true)));
@@ -188,14 +188,21 @@ public class OsuApiCall {
                                 int negativeTotalChokeAmount = totalChokesNonFormatted - lastRequest.getTotalChokes();
                                 builder.addField(new MessageEmbed.Field("Total Chokes", totalChokes + "```diff\n+" + DecimalFormat.getInstance().format(negativeTotalChokeAmount) + "```", true));
                                 updatedRequest.setTotalChokes(totalChokesNonFormatted);
+                                log.info("Total Chokes was set to: {}", negativeTotalChokeAmount);
                             } else {
 
                                 builder.addField(new MessageEmbed.Field("Total Chokes", totalChokes, true));
                             }
 
+                            log.info("Username: {} | PP Amount: {} | Global Ranking: {} | Hit Acc: {} | Total Chokes: {} | Timestamp Of Request: {}"
+                                    ,userID,
+                                    ppAmountNonFormatted,
+                                    globalRankingNonFormatted,
+                                    hitAccNonFormatted,
+                                    totalChokesNonFormatted,
+                                    ZonedDateTime.now());
 
-                            osuApiModelI.updateLastRequestWithChangedOSUStats(event.getUser().getName(), ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
-
+                            osuApiModelI.updateLastRequestWithChangedOSUStats(userID, ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
                             builder.appendDescription("**Legend:**\n\n**Global Ranking:** If Global Ranking is Red its good, if its green its bad\n\n**PP:** If PP is red its bad, and if green its good\n\n**Chokes:** If Chokes is green at all its bad\n\n" +
                                     "**Hit Accuracy:** If Hit Acc is red it's bad, if green it's good\n\n*These Records update depending on your frequency of play and when you call this function of the bot.*");
                             builder.addBlankField(true)
@@ -205,6 +212,8 @@ public class OsuApiCall {
                             messageEmbed = builder.build();
 
                             event.replyEmbeds(messageEmbed).queue();
+
+
 
                         } else {
 

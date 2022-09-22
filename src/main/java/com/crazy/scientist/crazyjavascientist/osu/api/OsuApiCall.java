@@ -202,7 +202,7 @@ public class OsuApiCall {
                                     totalChokesNonFormatted,
                                     ZonedDateTime.now());
 
-                            osuApiModelI.updateLastRequestWithChangedOSUStats(userID, ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
+                            osuApiModelI.updateLastRequestWithChangedOSUStats(username, ppAmountNonFormatted, globalRankingNonFormatted, hitAccNonFormatted, totalChokesNonFormatted, ZonedDateTime.now());
                             builder.appendDescription("**Legend:**\n\n**Global Ranking:** If Global Ranking is Red its good, if its green its bad\n\n**PP:** If PP is red its bad, and if green its good\n\n**Chokes:** If Chokes is green at all its bad\n\n" +
                                     "**Hit Accuracy:** If Hit Acc is red it's bad, if green it's good\n\n*These Records update depending on your frequency of play and when you call this function of the bot.*");
                             builder.addBlankField(true)

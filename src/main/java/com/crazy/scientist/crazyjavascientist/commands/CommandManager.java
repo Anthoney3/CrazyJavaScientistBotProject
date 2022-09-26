@@ -49,6 +49,7 @@ public class CommandManager extends ListenerAdapter {
     private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
                     .addOption(OptionType.BOOLEAN, "email", "Sends an email to the bot owner with the feedback given", true),
             Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"),
+            Commands.slash("logout", "Kills the bot and shuts it down"),
             Commands.slash("delete-task-list", "Allows you to delete a task list by its title")
                     .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true)
     ));
@@ -60,7 +61,6 @@ public class CommandManager extends ListenerAdapter {
             Commands.slash("get-message-history", "Shows Server Message History.")
                     .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true),
             Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
-            Commands.slash("logout", "Kills the bot and shuts it down"),
             Commands.slash("get-search-history", "Retrieves the bots google search history")));
 
 
@@ -138,8 +138,8 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();

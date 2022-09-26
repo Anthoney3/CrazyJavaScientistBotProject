@@ -1,11 +1,23 @@
-package com.crazy.scientist.crazyjavascientist.osu.api;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_utils;
 
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuApiModel;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuBestPlayModel;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuMembers;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuMembersByNickname;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.BestPlayRepo;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuTokenModelI;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
@@ -18,14 +30,20 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.shardManager;
 
 
 @Slf4j
+@Data
 @Component
 public class OsuApiCall {
 
@@ -36,6 +54,16 @@ public class OsuApiCall {
 
     @Autowired
     private OsuTokenModelI osuTokenModelI;
+
+
+    @Autowired
+    private BestPlayRepo bestPlayRepo;
+
+    private List<OsuBestPlayModel> currentBestPlays;
+
+    private List<OsuMembersByNickname> osuMembersWithNicknameAttached = new ArrayList<>();
+    private List<OsuApiModel> osuDBMemberInfo;
+    private List<Member> osuGuildMembers;
 
 
     public void makeOsuAPICall(@Nonnull SlashCommandInteraction event) {
@@ -62,8 +90,12 @@ public class OsuApiCall {
 
                 try {
 
+                    //Displays Roles and Usernames when Uncommented
+//                    testRoleOutput();
 
                     JSONObject responseObject = new JSONObject(getOsuStatsAPICall(userID));
+
+                    OsuBestPlayModel playersBestPlay = bestPlayRepo.getBestPlayByOsuUsername(responseObject.get("username").toString());
 
 
                     if (!responseObject.isEmpty()) {
@@ -86,7 +118,7 @@ public class OsuApiCall {
 
                         double hitAccNonFormatted = Double.parseDouble(responseObject.getJSONObject("statistics").get("hit_accuracy").toString());
 
-
+                        //Default User Information
                         String username = responseObject.get("username").toString();
                         String ppAmount = NumberFormat.getNumberInstance().format(responseObject.getJSONObject("statistics").get("pp"));
                         String totalChokes = responseObject.getJSONObject("statistics").getJSONObject("grade_counts").get("sh").toString();
@@ -95,6 +127,14 @@ public class OsuApiCall {
                         String globalRanking = (!responseObject.getJSONObject("statistics").get("global_rank").toString().equalsIgnoreCase("null")) ? NumberFormat.getNumberInstance().format(responseObject.getJSONObject("statistics").get("global_rank")) : "No Global Rank Found";
                         String hitAccuracy = "%" + responseObject.getJSONObject("statistics").get("hit_accuracy").toString();
                         String avatarUrl = responseObject.get("avatar_url").toString();
+
+                        //Player Best Play Information
+                        String mapRank = (playersBestPlay.getMapRank().equalsIgnoreCase("x")) ? "SS" : playersBestPlay.getMapRank();
+                        double mapHitAcc = ((playersBestPlay.getMapHitAcc() == 1.0) ? 100.00 : playersBestPlay.getMapHitAcc());
+                        int mapPPAmount = (int) Math.round(playersBestPlay.getMapPpAmount());
+                        String beatMapUrl = playersBestPlay.getBeatMapUrl();
+                        String mapTitle = playersBestPlay.getMapTitle();
+                        String beatMapCardImage = playersBestPlay.getBeatMapCardImage();
 
                         for (Object o : responseObject.getJSONArray("monthly_playcounts")) {
 
@@ -116,8 +156,8 @@ public class OsuApiCall {
                         OsuApiModel lastRequest = osuApiModelI.getLastRequestByOsuUsername(username);
 
                         if (lastRequest == null) {
-                            osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted, ZonedDateTime.now()));
-                        }else if (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted) {
+                            osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted,userID, ZonedDateTime.now()));
+                        } else if (lastRequest.getPp() != ppAmountNonFormatted || lastRequest.getGlobalRanking() != globalRankingNonFormatted || lastRequest.getTotalChokes() != lastRequest.getTotalChokes() || lastRequest.getHitAcc() != hitAccNonFormatted) {
 
                             builder = new EmbedBuilder()
                                     .setTitle(username + "'s Osu Stats")
@@ -195,7 +235,7 @@ public class OsuApiCall {
                             }
 
                             log.info("Username: {} | PP Amount: {} | Global Ranking: {} | Hit Acc: {} | Total Chokes: {} | Timestamp Of Request: {}"
-                                    ,userID,
+                                    , userID,
                                     ppAmountNonFormatted,
                                     globalRankingNonFormatted,
                                     hitAccNonFormatted,
@@ -207,12 +247,21 @@ public class OsuApiCall {
                                     "**Hit Accuracy:** If Hit Acc is red it's bad, if green it's good\n\n*These Records update depending on your frequency of play and when you call this function of the bot.*");
                             builder.addBlankField(true)
                                     .addBlankField(true)
-                                    .addBlankField(true);
+                                    .addBlankField(true)
+                                    .addField("Best Play", "", true)
+                                    .addBlankField(true)
+                                    .addBlankField(true)
+                                    .addField(new MessageEmbed.Field("Map Rank", mapRank, true))
+                                    .addField(new MessageEmbed.Field("PP Amount", String.valueOf(mapPPAmount), true))
+                                    .addField(new MessageEmbed.Field("Map Hit Acc", "%" + String.format("%.02f", (mapHitAcc != 100.00)? mapHitAcc * 100 : mapHitAcc), true))
+                                    .addField(new MessageEmbed.Field("Name", mapTitle, true))
+                                    .addField(new MessageEmbed.Field("Beat Map Url", beatMapUrl, true))
+                                    .setImage(beatMapCardImage);
+
 
                             messageEmbed = builder.build();
 
                             event.replyEmbeds(messageEmbed).queue();
-
 
 
                         } else {
@@ -229,6 +278,18 @@ public class OsuApiCall {
                                     .addField(new MessageEmbed.Field("Global Ranking", globalRanking, true))
                                     .addField(new MessageEmbed.Field("Total Chokes", totalChokes, true))
                                     .addField(new MessageEmbed.Field("Hit Accuracy", hitAccuracy, true))
+                                    .addBlankField(true)
+                                    .addBlankField(true)
+                                    .addBlankField(true)
+                                    .addField("Best Play", "", true)
+                                    .addBlankField(true)
+                                    .addBlankField(true)
+                                    .addField(new MessageEmbed.Field("Map Rank", mapRank, true))
+                                    .addField(new MessageEmbed.Field("PP Amount", String.valueOf(mapPPAmount), true))
+                                    .addField(new MessageEmbed.Field("Map Hit Acc", "%" + String.format("%.02f",(mapHitAcc != 100.00)? mapHitAcc * 100 : mapHitAcc), true))
+                                    .addField(new MessageEmbed.Field("Name", mapTitle, true))
+                                    .addField(new MessageEmbed.Field("Beat Map Url", beatMapUrl, true))
+                                    .setImage(beatMapCardImage)
                                     .build();
 
                             event.replyEmbeds(messageEmbed).queue();
@@ -255,8 +316,134 @@ public class OsuApiCall {
         }
     }
 
+    @Scheduled(fixedDelay = 5000, initialDelay = 5000)
+    public void checkForNewBestPlays() {
 
-    public void populateDBOnStartWithOsuRecords() {
+        currentBestPlays = bestPlayRepo.getAllCurrentBestPlays();
+
+        for (OsuBestPlayModel bestPlay : currentBestPlays) {
+
+            try {
+
+                JSONObject bestPlayObject = new JSONObject(getOsuBestPlay(String.valueOf(bestPlay.getId())));
+
+                if (Double.parseDouble(bestPlayObject.get("accuracy").toString()) != bestPlay.getMapHitAcc() ||
+                        Double.parseDouble(bestPlayObject.getJSONObject("weight").get("pp").toString()) != bestPlay.getMapPpAmount() ||
+                        !bestPlayObject.get("rank").toString().equalsIgnoreCase(bestPlay.getMapRank()) ||
+                        !bestPlayObject.getJSONObject("beatmapset").get("title").toString().equalsIgnoreCase(bestPlay.getMapTitle())) {
+
+                    OsuBestPlayModel newBestPlay = new OsuBestPlayModel(Long.parseLong(bestPlayObject.getJSONObject("user").get("id").toString()), bestPlayObject.getJSONObject("user").get("username").toString(),
+                            bestPlayObject.get("rank").toString(),
+                            Double.parseDouble(bestPlayObject.get("accuracy").toString()),
+                            Double.parseDouble(bestPlayObject.getJSONObject("weight").get("pp").toString()),
+                            bestPlayObject.getJSONObject("beatmapset").get("title").toString(),
+                            bestPlayObject.getJSONObject("beatmap").get("url").toString(),
+                            bestPlayObject.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString());
+
+                    String newBestPlayTitle = newBestPlay.getMapTitle();
+                    String newBestPlayMapUrl = newBestPlay.getBeatMapUrl();
+                    String newBestPlayCard = newBestPlay.getBeatMapCardImage();
+                    String newBestPlayRank = (newBestPlay.getMapRank().equalsIgnoreCase("x")) ? "SS" : newBestPlay.getMapRank();
+                    int newBestPlayPP = (int) Math.round(newBestPlay.getMapPpAmount());
+                    double newBestPlayHitAcc = (newBestPlay.getMapHitAcc() == 1.0) ? 100.00 : newBestPlay.getMapHitAcc();
+
+                    bestPlayRepo.updateNewBestPlay(newBestPlay.getId(),
+                            newBestPlay.getUsername(),
+                            newBestPlay.getMapRank()
+                            , newBestPlay.getMapHitAcc(),
+                            newBestPlay.getMapPpAmount()
+                            , newBestPlay.getMapTitle(),
+                            newBestPlay.getBeatMapUrl()
+                            , newBestPlay.getBeatMapCardImage());
+
+
+                    MessageEmbed messageEmbed = new EmbedBuilder()
+                            .setTitle(bestPlayObject.getJSONObject("user").get("username").toString() + "'s New Best Play!")
+                            .addField("Rank", newBestPlayRank, true)
+                            .addField("PP Amount", String.valueOf(newBestPlayPP), true)
+                            .addField("Accuracy", "%" + String.format("%.02f", (newBestPlayHitAcc != 100.00)? newBestPlayHitAcc * 100 : newBestPlayHitAcc), true)
+                            .addField("Name", newBestPlayTitle, true)
+                            .addField("Beat Map Url", newBestPlayMapUrl, true)
+                            .setImage(newBestPlayCard)
+                            .setThumbnail(bestPlayObject.getJSONObject("user").get("avatar_url").toString())
+                            .build();
+
+
+                    for(OsuApiModel user : osuDBMemberInfo){
+                        if(user.getUsername().equalsIgnoreCase(newBestPlay.getUsername())){
+
+
+                            if(!user.getNickname().equalsIgnoreCase("1")){
+                                shardManager.getGuildById(952394376640888853L).getTextChannelById(1023754936426692649L).sendMessage("<@" + user.getDiscordUserID() + ">" + " " + "<@" + osuApiModelI.getUserByNickName(String.valueOf((Integer.parseInt(user.getNickname()))-1)) + ">").queue();
+                            }else{
+                                shardManager.getGuildById(952394376640888853L).getTextChannelById(1023754936426692649L).sendMessage("<@" + user.getDiscordUserID() + ">").queue();
+                            }
+                        }
+                    }
+                    shardManager.getGuildById(952394376640888853L).getTextChannelById(1023754936426692649L).sendMessageEmbeds(messageEmbed).queue();
+
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+    }
+
+    public void testRoleOutput() {
+
+        osuGuildMembers = shardManager.getGuildById(952394376640888853L).getMembers();
+        osuDBMemberInfo = osuApiModelI.getAllMemberInfo();
+
+
+        for (Member member : osuGuildMembers) {
+
+            if(!member.getUser().isBot()) {
+                for(OsuApiModel user : osuDBMemberInfo){
+
+                    if(user.getNickname().equalsIgnoreCase(member.getNickname())){
+                        osuMembersWithNicknameAttached.add(new OsuMembersByNickname(member.getUser().getName(), user.getNickname()));
+                    }
+                }
+            }
+
+        }
+
+
+
+        shardManager.getUserById(416342612484554752L).openPrivateChannel().queue(message -> {
+
+            EmbedBuilder builder = new EmbedBuilder()
+                    .setTitle("Members and Their Corresponding Roles")
+                    .addField("Member", "", true)
+                    .addBlankField(true)
+                    .addField("Nickname", "", true)
+                    .addBlankField(true)
+                    .addBlankField(true)
+                    .addBlankField(true);
+
+            MessageEmbed embed;
+
+
+            for (OsuMembersByNickname member : osuMembersWithNicknameAttached) {
+                builder.addField(member.getOsuMemberName(), "", true)
+                        .addBlankField(true)
+                        .addField(member.getNickname(), "", true);
+            }
+            embed = builder.build();
+
+            message.sendMessageEmbeds(embed).queue();
+
+        });
+    }
+
+
+    public void populateDBOnStartWithOsuRecords(ShardManager manager) throws IOException {
+
+
+
 
         List<OsuMembers> osuMembers = new ArrayList<>();
 
@@ -267,15 +454,35 @@ public class OsuApiCall {
         osuMembers.add(OsuMembers.FIVE);
         osuMembers.add(OsuMembers.SIX);
 
+
         for (OsuMembers osuMember : osuMembers) {
 
             try {
+                String userID = null;
+                if(osuMember.equals(OsuMembers.ONE)){
+                    userID = "1";
+                }else if(osuMember.equals(OsuMembers.TWO)){
+                    userID = "2";
+                }else if(osuMember.equals(OsuMembers.THREE)){
+                    userID = "3";
+                }
+                else if(osuMember.equals(OsuMembers.FOUR)){
+                    userID = "4";
+                }else if(osuMember.equals(OsuMembers.FIVE)){
+                    userID = "5";
+                }
+                else if(osuMember.equals(OsuMembers.SIX)){
+                    userID = "6";
+                }
 
 
                 JSONObject responseObject = new JSONObject(getOsuStatsAPICall(osuMember.getUserID()));
+                JSONObject bestPlayObject = new JSONObject(getOsuBestPlay(osuMember.getUserID()));
 
 
-                if (!responseObject.isEmpty()) {
+                if (!responseObject.isEmpty() && !bestPlayObject.isEmpty()) {
+
+                    saveBestPlayToDB(bestPlayObject);
 
                     String month = (LocalDate.now().getMonthValue() < 10) ? ("0" + LocalDate.now().getMonthValue()) : String.valueOf(LocalDate.now().getMonthValue());
                     int year = LocalDate.now().getYear();
@@ -306,8 +513,11 @@ public class OsuApiCall {
                     OsuApiModel lastRequest = osuApiModelI.getLastRequestByOsuUsername(username);
 
                     if (lastRequest == null) {
-                        osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted, ZonedDateTime.now()));
-                        log.info("{} added to the DB Successfully",username);
+
+                                osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted,userID, ZonedDateTime.now()));
+
+
+                        log.info("{} added to the DB Successfully", username);
                     }
                 } else {
 
@@ -318,7 +528,14 @@ public class OsuApiCall {
                 e.printStackTrace();
             }
         }
+        osuGuildMembers = manager.getGuildById(952394376640888853L).getMembers();
+        for(Member member: osuGuildMembers){
+            if(!member.getUser().isBot()){
+                osuApiModelI.updateDiscordUserID(member.getUser().getId(),member.getNickname());
+            }
+        }
         log.info("All Users Have been Added to the DB Successfully!");
+        osuDBMemberInfo = osuApiModelI.getAllMemberInfo();
     }
 
 
@@ -350,14 +567,13 @@ public class OsuApiCall {
         return returnResponse.toString();
     }
 
-   /* public String getOsuBestPlay(String userID) throws IOException {
+    public String getOsuBestPlay(String userID) throws IOException {
 
-        URL bestPlayUrl = new URL("https://osu.ppy.sh/api/v2/users/" +userID+ "/scores/best?include_fails=0&mode=osu&limit=50&offset=1");
+        URL bestPlayUrl = new URL("https://osu.ppy.sh/api/v2/users/" + userID + "/scores/best?include_fails=1&mode=osu&limit=1");
 
         StringBuilder bestPlayResponse = new StringBuilder();
 
         HttpURLConnection connection = (HttpURLConnection) bestPlayUrl.openConnection();
-
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
@@ -374,47 +590,21 @@ public class OsuApiCall {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        Files.writeString(Paths.get(System.getProperty("user.home")+"/OsuApiCall.json"), bestPlayResponse.toString());
-
-        return bestPlayResponse.toString().substring(1,bestPlayResponse.length() -1);
-    }*/
-
-    /*public String getUsersById() throws IOException {
-
-        URL groupedUsers = new URL("https://osu.ppy.sh/api/v2/users?ids[21120079]");
+        return bestPlayResponse.substring(1, bestPlayResponse.length() - 1);
+    }
 
 
-//                + OsuMembers.TWO.getUserID()  + "," + OsuMembers.THREE.getUserID()  + "," + OsuMembers.FOUR.getUserID()  + "," + OsuMembers.FIVE.getUserID()  + "," + OsuMembers.SIX.getUserID());
-        StringBuilder response = new StringBuilder();
+    public void saveBestPlayToDB(JSONObject object) {
 
+        OsuBestPlayModel playerOsuBestPlay = new OsuBestPlayModel(Long.parseLong(object.getJSONObject("user").get("id").toString()), object.getJSONObject("user").get("username").toString(), object.get("rank").toString(),
+                Double.parseDouble(object.get("accuracy").toString()),
+                Double.parseDouble(object.getJSONObject("weight").get("pp").toString()),
+                object.getJSONObject("beatmapset").get("title").toString(),
+                object.getJSONObject("beatmap").get("url").toString(),
+                object.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString());
 
-        HttpURLConnection connection = (HttpURLConnection) groupedUsers.openConnection();
-
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
-
-
-        try (BufferedReader bf = new BufferedReader(new InputStreamReader(
-                connection.getInputStream()))) {
-            String line;
-            while ((line = bf.readLine()) != null) {
-
-                response.append(line);
-
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        log.info("{}",response);
-
-        Files.writeString(Paths.get(System.getProperty("user.home")+"/OsuGetAllUsers.json"), response.toString());
-
-        return response.toString();
-
-    }*/
+        bestPlayRepo.save(playerOsuBestPlay);
+    }
 
 
 }

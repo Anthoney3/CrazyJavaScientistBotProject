@@ -1,7 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
-import com.crazy.scientist.crazyjavascientist.osu.api.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -138,14 +138,16 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
         }
 
     }
+
+
 
 
     @Override

@@ -1,5 +1,7 @@
-package com.crazy.scientist.crazyjavascientist.osu.api;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_utils;
 
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuTokenModel;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuTokenModelI;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.ShardManager;

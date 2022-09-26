@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu.api;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_models;
 
 
 
@@ -6,14 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 
 
 @Entity
 @Data
 @NoArgsConstructor
+@Table(name = "OSU_MEMBER_INFO")
 public class OsuApiModel {
 
     @Id
@@ -41,10 +40,16 @@ public class OsuApiModel {
     @Column(name = "HIT_ACC")
     private double hitAcc;
 
+    @Column(name = "DISCORD_NICKNAME")
+    private String nickname;
+
+    @Column(name = "DISCORD_USER_ID")
+    private String discordUserID;
+
     @Column
     private ZonedDateTime lastRequestDateAndTime;
 
-    public OsuApiModel(String username, double pp, int monthlyPlaycount, String totalTimePlayed, int globalRanking, int totalChokes, double hitAcc, ZonedDateTime lastRequestDateAndTime) {
+    public OsuApiModel(String username, double pp, int monthlyPlaycount, String totalTimePlayed, int globalRanking, int totalChokes, double hitAcc, String nickname, String discordUserID, ZonedDateTime lastRequestDateAndTime) {
         this.username = username;
         this.pp = pp;
         this.monthlyPlaycount = monthlyPlaycount;
@@ -52,7 +57,20 @@ public class OsuApiModel {
         this.globalRanking = globalRanking;
         this.totalChokes = totalChokes;
         this.hitAcc = hitAcc;
+        this.nickname = nickname;
+        this.discordUserID = discordUserID;
         this.lastRequestDateAndTime = lastRequestDateAndTime;
     }
 
+    public OsuApiModel(String username, double pp, int monthlyPlaycount, String totalTimePlayed, int globalRanking, int totalChokes, double hitAcc, String nickname, ZonedDateTime lastRequestDateAndTime) {
+        this.username = username;
+        this.pp = pp;
+        this.monthlyPlaycount = monthlyPlaycount;
+        this.totalTimePlayed = totalTimePlayed;
+        this.globalRanking = globalRanking;
+        this.totalChokes = totalChokes;
+        this.hitAcc = hitAcc;
+        this.nickname = nickname;
+        this.lastRequestDateAndTime = lastRequestDateAndTime;
+    }
 }

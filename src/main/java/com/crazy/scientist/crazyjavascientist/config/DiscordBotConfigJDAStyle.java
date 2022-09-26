@@ -1,10 +1,10 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
-import com.crazy.scientist.crazyjavascientist.osu.api.OAuthToken;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
-import com.crazy.scientist.crazyjavascientist.osu.api.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class DiscordBotConfigJDAStyle {
 
     private Dotenv config;
 
-    private static ShardManager shardManager ;
+    public static ShardManager shardManager ;
 
     @Autowired
     private OAuthToken oAuthToken;
@@ -56,6 +57,7 @@ public class DiscordBotConfigJDAStyle {
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
         builder.setStatus(OnlineStatus.ONLINE);
         builder.setActivity(Activity.watching("Porn"));
+        builder.setMemberCachePolicy(MemberCachePolicy.ALL);
         builder.enableIntents(GatewayIntent.GUILD_MEMBERS,GatewayIntent.GUILD_MESSAGES,GatewayIntent.GUILD_MESSAGE_TYPING,GatewayIntent.GUILD_PRESENCES);
 
         shardManager = builder.build();
@@ -63,7 +65,8 @@ public class DiscordBotConfigJDAStyle {
         shardManager.addEventListener(commandManager, messageEventListeners, greetings);
 
         oAuthToken.getOsuOAuthToken(shardManager);
-        osuApiCall.populateDBOnStartWithOsuRecords();
+        osuApiCall.populateDBOnStartWithOsuRecords(shardManager);
+
 
     }
 

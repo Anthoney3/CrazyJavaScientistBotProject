@@ -1,7 +1,8 @@
-package com.crazy.scientist.crazyjavascientist.osu.api;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_models;
 
 import lombok.Data;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.time.ZonedDateTime;
 

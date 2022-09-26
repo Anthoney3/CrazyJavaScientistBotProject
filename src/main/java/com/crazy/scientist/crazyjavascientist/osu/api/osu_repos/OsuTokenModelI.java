@@ -1,5 +1,6 @@
-package com.crazy.scientist.crazyjavascientist.osu.api;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_repos;
 
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuTokenModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

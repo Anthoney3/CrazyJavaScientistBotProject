@@ -1,5 +1,6 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
@@ -48,6 +49,9 @@ public class DiscordBotConfigJDAStyle {
     private Greetings greetings;
 
     @Autowired
+    private OsuApiModelI osuApiModelI;
+
+    @Autowired
     private OsuApiCall osuApiCall;
 
     public  void init() throws IOException, LoginException {
@@ -65,7 +69,10 @@ public class DiscordBotConfigJDAStyle {
         shardManager.addEventListener(commandManager, messageEventListeners, greetings);
 
         oAuthToken.getOsuOAuthToken(shardManager);
-        osuApiCall.populateDBOnStartWithOsuRecords(shardManager);
+
+        if(osuApiModelI.getAllMemberInfo().isEmpty()) {
+            osuApiCall.populateDBOnStartWithOsuRecords(shardManager);
+        }
 
 
     }

@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -338,7 +339,7 @@ public class OsuApiCall {
                             Double.parseDouble(bestPlayObject.getJSONObject("weight").get("pp").toString()),
                             bestPlayObject.getJSONObject("beatmapset").get("title").toString(),
                             bestPlayObject.getJSONObject("beatmap").get("url").toString(),
-                            bestPlayObject.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString());
+                            bestPlayObject.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString(),ZonedDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a").withZone(ZoneId.of("America/New_York"))));
 
                     String newBestPlayTitle = newBestPlay.getMapTitle();
                     String newBestPlayMapUrl = newBestPlay.getBeatMapUrl();
@@ -354,7 +355,7 @@ public class OsuApiCall {
                             newBestPlay.getMapPpAmount()
                             , newBestPlay.getMapTitle(),
                             newBestPlay.getBeatMapUrl()
-                            , newBestPlay.getBeatMapCardImage());
+                            , newBestPlay.getBeatMapCardImage(), ZonedDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a").withZone(ZoneId.of("America/New_York"))));
 
 
                     MessageEmbed messageEmbed = new EmbedBuilder()
@@ -498,6 +499,9 @@ public class OsuApiCall {
 
                     String username = responseObject.get("username").toString();
                     String totalTimePlayed = String.format("%01dd %2dh %02dm", days, hours, mins);
+                    String avatarUrl = responseObject.get("avatar_url").toString();
+
+                    log.info("Avatar URL Found: {}",avatarUrl);
 
                     for (Object o : responseObject.getJSONArray("monthly_playcounts")) {
 
@@ -514,7 +518,7 @@ public class OsuApiCall {
 
                     if (lastRequest == null) {
 
-                                osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted,userID, ZonedDateTime.now()));
+                                osuApiModelI.save(new OsuApiModel(username, ppAmountNonFormatted, monthlyPlayCountsUnformatted, totalTimePlayed, globalRankingNonFormatted, totalChokesNonFormatted, hitAccNonFormatted,userID,avatarUrl, ZonedDateTime.now()));
 
 
                         log.info("{} added to the DB Successfully", username);
@@ -601,7 +605,7 @@ public class OsuApiCall {
                 Double.parseDouble(object.getJSONObject("weight").get("pp").toString()),
                 object.getJSONObject("beatmapset").get("title").toString(),
                 object.getJSONObject("beatmap").get("url").toString(),
-                object.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString());
+                object.getJSONObject("beatmapset").getJSONObject("covers").get("card").toString(),ZonedDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy hh:mm:ss a").withZone(ZoneId.of("America/New_York"))));
 
         bestPlayRepo.save(playerOsuBestPlay);
     }

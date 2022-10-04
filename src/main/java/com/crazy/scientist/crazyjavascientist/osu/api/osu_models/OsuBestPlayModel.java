@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -35,7 +36,10 @@ public class OsuBestPlayModel{
     @Column(name = "BEAT_MAP_CARD")
     private String beatMapCardImage;
 
-    public OsuBestPlayModel(long id, String username, String mapRank, double mapHitAcc, double mapPpAmount, String mapTitle, String beatMapUrl, String beatMapCardImage) {
+    @Column(name = "TIME_UPDATED")
+    private String timeUpdated;
+
+    public OsuBestPlayModel(long id, String username, String mapRank, double mapHitAcc, double mapPpAmount, String mapTitle, String beatMapUrl, String beatMapCardImage, String timeUpdated) {
         this.id = id;
         this.username = username;
         this.mapRank = mapRank;
@@ -44,5 +48,6 @@ public class OsuBestPlayModel{
         this.mapTitle = mapTitle;
         this.beatMapUrl = beatMapUrl;
         this.beatMapCardImage = beatMapCardImage;
+        this.timeUpdated = timeUpdated;
     }
 }

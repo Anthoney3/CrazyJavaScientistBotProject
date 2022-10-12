@@ -23,9 +23,9 @@ public class SendSMSMessage {
     @Scheduled(cron = "0 0 8 1 * *")
     public void sendTextWhenReadyForW2WSubmission(){
         Twilio.init(smsConfig.get("TWILIO_SID"), smsConfig.get("TWILIO_AUTH_ID"));
-        Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("https://209.127.178.46/api/message-status")).create();
+        Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
         log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wAnthonyMessage.getBody(), w2wAnthonyMessage.getFrom(),w2wAnthonyMessage.getDateCreated());
-        Message w2wZachMessage = Message.creator(new PhoneNumber(PhoneNumbers.ZACH.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).create();
+        Message w2wZachMessage = Message.creator(new PhoneNumber(PhoneNumbers.ZACH.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
         log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wZachMessage.getBody(), w2wZachMessage.getFrom(),w2wZachMessage.getDateCreated());
 
     }

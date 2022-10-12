@@ -20,18 +20,18 @@ public class SendSMSMessage {
     private final String msgToSend = "This is a Friendly Reminder to update your timesheet for the month!";
     private final String cteReminderMsg = "This is a Friendly Reminder to ensure CTE Env is Shutdown Using the CLI Tool!";
 
-    @Scheduled(cron = "0 0 8 1 * *")
+    @Scheduled(cron = "${sms.w2w.reminder.cron.job}")
     public void sendTextWhenReadyForW2WSubmission(){
         Twilio.init(smsConfig.get("TWILIO_SID"), smsConfig.get("TWILIO_AUTH_ID"));
         Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
-        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wAnthonyMessage.getBody(), w2wAnthonyMessage.getFrom(),w2wAnthonyMessage.getDateCreated());
+        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wAnthonyMessage.getBody(), w2wAnthonyMessage.getTo(),w2wAnthonyMessage.getDateCreated());
         Message w2wZachMessage = Message.creator(new PhoneNumber(PhoneNumbers.ZACH.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
-        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wZachMessage.getBody(), w2wZachMessage.getFrom(),w2wZachMessage.getDateCreated());
+        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wZachMessage.getBody(), w2wZachMessage.getTo(),w2wZachMessage.getDateCreated());
 
     }
 
 
-    @Scheduled(cron = "0 0 8 * * *")
+    @Scheduled(cron = "${sms.cte.reminder.cron.job}")
     public void reminderForCTE(){
         Twilio.init(smsConfig.get("TWILIO_SID"), smsConfig.get("TWILIO_AUTH_ID"));
         Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),cteReminderMsg).create();

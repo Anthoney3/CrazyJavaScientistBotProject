@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration>
+    <property name="APP_SHORT_NAME" value="cjs"/>
+    <property name="CONSOLE_APPENDER_WRITE_LIMIT" value="3GB every day"/>
+    <property name="FILE_APPENDER_TOTAL_SIZE_CAP" value="3GB"/>
+    <property name="FILE_APPENDER_WRITE_LIMIT" value="3GB every day"/>
+    <property name="ERROR_FILE_APPENDER_TOTAL_SIZE_CAP" value="500MB"/>
+    <property name="ERROR_FILE_APPENDER_WRITE_LIMIT" value="3GB every day"/>
+
+    <include resource="com/crazy/scientist/crazyjavascientist/resources/logging/defaults.xml"/>
+    <include resource="com/crazy/scientist/crazyjavascientist/resources/logging/console-appender.xml"/>
+    <include resource="com/crazy/scientist/crazyjavascientist/resources/logging/file-appender.xml"/>
+    <include resource="com/crazy/scientist/crazyjavascientist/resources/logging/error-file-appender.xml"/>
+
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_APPENDER"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_APPENDER"/>
+            <appender-ref ref="FILE_APPENDER"/>
+            <appender-ref ref="ERROR_FILE_APPENDER"/>
+        </root>
+    </springProfile>
+
+    <logger name="lombok.extern.slf4j.Slf4j" level="ERROR"/>
+
+
+</configuration>

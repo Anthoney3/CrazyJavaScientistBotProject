@@ -13,13 +13,17 @@ pipeline {
     }
     stage('Remove Old Jar'){
        steps{
-         sh 'ps -ef | grep CrazyJavaScientist-0.0.1-SNAPSHOT.jar | awk \'{print $2}\' | xargs sudo kill -9 || true'
+         sh 'ps -ef | grep cjs-1.jar | awk \'{print $2}\' | xargs sudo kill -9 || true'
         }
     }
     stage('archive') {
        steps {
         archiveArtifacts(artifacts: '**/*.jar', followSymlinks: false)
       }
+    }
+    stage('Post Build'){
+    copyArtifacts(projectName: 'cjs',selector: specific("${BUILD_NUMBER}"), target:"/root/discordbot/crazyjavascientist/lib");
+
     }
     stage('Deploy New Jar'){
        steps{

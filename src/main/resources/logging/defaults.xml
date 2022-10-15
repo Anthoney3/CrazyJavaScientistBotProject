@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<included>
+
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <define name="SHORT_HOSTNAME" class="com.crazy.scientist.crazyjavascientist.logging.ShortHostName"/>
+    <springProperty scope="context" name="APP_PROFILE" source="spring.profiles.active" defaultValue="default"/>
+
+    <property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) %clr(%-5(${PID:-})){magenta} %clr([%17.17t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%rEx}"/>
+    <property name="FILE_LOG_PATTERN" value="${FILE_LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss.SSS}   %-5level %-12(${APP_SHORT_NAME}) %-13(${SHORT_NAME}) %-13(${SHORT_HOSTNAME:- }) %-5(${PID:- } [%17.17thread] %-40.40logger{39} : %m%n%rEx}"/>
+    <property name="ERROR_FILE_LOG_PATTERN" value="${ERROR_FILE_LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss.SSS}   %-5level %-12(${APP_SHORT_NAME}) %-13(${SHORT_NAME}) %-13(${SHORT_HOSTNAME:- }) %-5(${PID:- } [%17.17thread] %-40.40logger{39} : %m%n%rEx}"/>
+
+    <property name="CONSOLE_APPENDER_WRITE_LIMIT" value="${CONSOLE_APPENDER_WRITE_LIMIT:- }"/>
+
+
+    <property name="FILE_APPENDER_WRITE_LIMIT" value="${FILE_APPENDER_WRITE_LIMIT:- }"/>
+    <property name="FILE_APPENDER_MAX_FILE_SIZE" value="${FILE_APPENDER_MAX_FILE_SIZE:-10MB}"/>
+    <property name="FILE_APPENDER_MAX_HISTORY" value="${FILE_APPENDER_MAX_HISTORY:-20}"/>
+    <property name="FILE_APPENDER_TOTAL_SIZE_CAP" value="${FILE_APPENDER_TOTAL_SIZE_CAP:-3GB}"/>
+<!--    <property name="ASYNC_FILE_APPENDER_QUEUE_SIZE" value="${ASYNC_FILE_APPENDER_QUEUE_SIZE:-256}"/>-->
+<!--    <property name="ASYNC_FILE_APPENDER_DISCARDING_THRESHOLD" value="${ASYNC_APPENDER_DISCARDING_THRESHOLD:-0"/>-->
+<!--    <property name="ASYNC_FILE_APPENDER_INCLUDE_CALLER_DATA" value="${ASYNC_FILE_APPENDER_INCLUDE_CALLER_DATA:-false}"/>-->
+<!--    <property name="ASYNC_FILE_APPENDER_MAX_FLUSH_TIME" value="${ASYNC_FILE_APPENDER_MAX_FLUSH_TIME:-5000}"/>-->
+<!--    <property name="ASYNC_FILE_APPENDER_NEVER_BLOCK" value="${ASYNC_FILE_APPENDER_NEVER_BLOCK:-false}"/>-->
+
+    <property name="ERROR_FILE_APPENDER_WRITE_LIMIT" value="${ERROR_FILE_APPENDER_WRITE_LIMIT:- }"/>
+    <property name="ERROR_FILE_APPENDER_MAX_FILE_SIZE" value="${ERROR_FILE_APPENDER_MAX_FILE_SIZE:-10MB}"/>
+    <property name="ERROR_FILE_APPENDER_MAX_HISTORY" value="${ERROR_FILE_APPENDER_MAX_HISTORY:-20}"/>
+    <property name="ERROR_FILE_APPENDER_TOTAL_SIZE_CAP" value="${ERROR_FILE_APPENDER_TOTAL_SIZE_CAP:-1GB}"/>
+
+
+</included>

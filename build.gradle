@@ -21,7 +21,7 @@ plugins {
 }
 
 group = 'com.crazy.scientist'
-version = '0.0.1-SNAPSHOT'
+version = '1'
 sourceCompatibility = '17'
 
 
@@ -52,6 +52,11 @@ dependencies {
     implementation 'com.h2database:h2:2.1.214'
     implementation 'com.twilio.sdk:twilio:9.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0-rc1'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+
+
+
 
 
 

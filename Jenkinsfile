@@ -4,7 +4,7 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
     durabilityHint('PERFORMANCE_OPTIMIZED')
     disableConcurrentBuilds()
-    copyArtifactPermission('Post Build')
+    copyArtifactPermission('Discord Bot Deployment')
   }
   stages{
     stage('build') {

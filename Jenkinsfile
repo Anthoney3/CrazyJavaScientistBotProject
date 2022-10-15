@@ -4,6 +4,7 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
     durabilityHint('PERFORMANCE_OPTIMIZED')
     disableConcurrentBuilds()
+    copyArtifactPermission('Post Build')
   }
   stages{
     stage('build') {
@@ -28,7 +29,7 @@ pipeline {
     }
     stage('Deploy New Jar'){
        steps{
-          sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /var/lib/jenkins/jobs/\'Discord Bot Deployment\'/builds/${BUILD_NUMBER}/archive/build/libs/CrazyJavaScientist-0.0.1-SNAPSHOT.jar &'
+          sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /var/lib/jenkins/jobs/\'Discord Bot Deployment\'/builds/${BUILD_NUMBER}/archive/build/libs/cjs-1.jar &'
       }
     }
   }

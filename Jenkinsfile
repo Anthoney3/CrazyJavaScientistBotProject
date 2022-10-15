@@ -22,8 +22,9 @@ pipeline {
       }
     }
     stage('Post Build'){
-    copyArtifacts(projectName: 'cjs',selector: specific("${BUILD_NUMBER}"), target:"/root/discordbot/crazyjavascientist/lib");
-
+    steps{
+    copyArtifacts(projectName: 'cjs',selector: specific("${BUILD_NUMBER}"), target:"/root/discordbot/crazyjavascientist/lib")
+    }
     }
     stage('Deploy New Jar'){
        steps{

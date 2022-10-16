@@ -29,7 +29,9 @@ pipeline {
     }
     stage('Run Jar'){
     steps{
+        withEnv(['JENKINS_NODE_COOKIE=dontKillMe']){
         sh '/discordbot/crazyjavascientist/cjs/./run_cjs.sh'
+        }
 
     }
     }

@@ -2,7 +2,7 @@
 <configuration>
 
     <!-- Setting up log path and log file name -->
-    <property name="LOG_PATH" value="/discordbot/crazyjavascientist/cjs/./logs" />
+    <property name="LOG_PATH" value="./logs" />
     <property name="LOG_FILE_NAME" value="cjs" />
 
     <!-- Setting up logging pattern for console logging -->

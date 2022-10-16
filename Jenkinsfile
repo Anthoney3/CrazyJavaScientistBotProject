@@ -37,7 +37,7 @@ pipeline {
     }
     stage('Post Build'){
     steps{
-    emailext attachLog: true, recipientProviders: [developers(), buildUser()], subject: 'Build ${BUILD_NUMBER} Status', to: 'AnthoneyChiocca.ac@gmail.com'
+    emailext attachLog: true,body:'', recipientProviders: [developers(), buildUser()], subject: 'Build ${BUILD_NUMBER} Status', to: 'AnthoneyChiocca.ac@gmail.com'
     }
     }
   }

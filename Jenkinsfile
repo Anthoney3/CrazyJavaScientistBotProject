@@ -35,13 +35,6 @@ pipeline {
 
     }
     }
-    stage('Post Build'){
-    steps{
-    catchError(message: 'BUILD FAILED!') {
-        mail bcc: '', body: 'Build ${BUILD_NUMBER} Failed', cc: '', from: '', replyTo: '', subject: 'Build ${BUILD_NUMBER} Status', to: 'AnthoneyChiocca.ac@gmail.com'
-    }
-    }
-    }
   }
 }
 

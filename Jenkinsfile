@@ -40,7 +40,6 @@ pipeline {
     copyArtifacts(projectName: 'Discord Bot Deployment',selector: specific("${BUILD_NUMBER}"), target:"/discordbot/crazyjavascientist/cjs/")
     }
     }
-    }
   }
 }
 

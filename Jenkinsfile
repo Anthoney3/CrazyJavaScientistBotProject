@@ -29,7 +29,7 @@ pipeline {
     }
     stage('Deploy New Jar'){
        steps{
-          sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /discordbot/crazyjavascientist/cjs/build/libs/cjs-1.jar & >cjs.log'
+          sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /discordbot/crazyjavascientist/cjs/build/libs/cjs-1.jar &'
       }
     }
   }

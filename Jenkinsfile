@@ -14,7 +14,7 @@ pipeline {
     }
     stage('Remove Old Jar'){
        steps{
-         sh ' sudo ps -ef | grep cjs-1.jar | awk \'{print $2}\' | xargs sudo kill -9 || true'
+         sh 'ps -ef | grep cjs-1.jar | awk \'{print $2}\' | xargs kill -9 || true'
         }
     }
     stage('archive') {

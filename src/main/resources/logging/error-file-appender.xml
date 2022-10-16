@@ -3,9 +3,9 @@
 <included>
     <appender name="ERROR_FILE_APPENDER" class="com.crazy.scientist.crazyjavascientist.logging.WriteLimitedRollingFileAppender">
         <writeLimit>${ERROR_FILE_APPENDER_WRITE_LIMIT}</writeLimit>
-        <file>../resources/${APP_SHORT_NAME}.error.log</file>
+        <file>${APP_SHORT_NAME}.error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>../logs/${APP_SHORT_NAME}.%d{yyyy-MM-dd}.%i.error.log</fileNamePattern>
+            <fileNamePattern>${APP_SHORT_NAME}.%d{yyyy-MM-dd}.%i.error.log</fileNamePattern>
             <maxFileSize>${ERROR_FILE_APPENDER_MAX_FILE_SIZE}</maxFileSize>
             <maxFileHistory>${ERROR_FILE_APPENDER_MAX_HISTORY}</maxFileHistory>
             <totalSizeCap>${ERROR_FILE_APPENDER_TOTAL_SIZE_CAP}</totalSizeCap>

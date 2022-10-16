@@ -3,9 +3,9 @@
 <included>
     <appender name="FILE_APPENDER" class="com.crazy.scientist.crazyjavascientist.logging.WriteLimitedRollingFileAppender">
         <writeLimit>${FILE_APPENDER_WRITE_LIMIT}</writeLimit>
-        <file>../logs/${APP_SHORT_NAME}.log</file>
+        <file>${APP_SHORT_NAME}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>../logs/${APP_SHORT_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${APP_SHORT_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>${FILE_APPENDER_MAX_FILE_SIZE}</maxFileSize>
             <maxFileHistory>${FILE_APPENDER_MAX_HISTORY}</maxFileHistory>
             <totalSizeCap>${FILE_APPENDER_TOTAL_SIZE_CAP}</totalSizeCap>

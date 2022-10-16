@@ -29,11 +29,10 @@ pipeline {
     }
     stage('Run Jar'){
     steps{
-    withEnv(['-Dspring.profiles.active=server']) {
         dir('/discordbot/crazyjavascientist/cjs/build/libs/') {
-                sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar cjs-1.jar &'
+                sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &'
             }
-    }
+
     }
     }
     stage('Post Build'){

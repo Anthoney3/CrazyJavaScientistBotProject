@@ -29,7 +29,7 @@ pipeline {
     }
     stage('Run Jar'){
     steps{
-    withEnv(['-Dhudson.tasks.MailSender.SEND_TO_UNKNOWN_USERS=true','-Dspring.profiles.active=server']) {
+    withEnv(['-Dspring.profiles.active=server']) {
         dir('/discordbot/crazyjavascientist/cjs/build/libs/') {
                 sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar cjs-1.jar &'
             }

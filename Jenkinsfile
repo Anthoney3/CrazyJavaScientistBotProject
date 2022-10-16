@@ -30,14 +30,11 @@ pipeline {
     stage('Run Jar'){
     steps{
        dir("/discordbot/crazyjavascientist/cjs/build/libs"){
-       sh '''echo \'Starting Jar Running Process...\'
-       JENKINS_NODE_COOKIE=dontKillMe
-       (nohup java -jar -Dspring.profiles.active=server cjs-1.jar > /dev/null &)
-       ps -ef | grep cjs-1.jar
-       echo \'Finishing Jar Run Process...\'
-       '''
-       }
-
+     sh 'echo \'Starting Jar Process\''
+     sh 'JENKINS_NODE_COOKIE=dontKillMe'
+     sh '(nohup java -jar -Dspring.profiles.active=server cjs.jar > /dev/null &)'
+     sh 'ps -ef | grep cjs-1.jar'
+     sh 'echo \'Finishing Jar Running Processes...\''
     }
     }
   }

@@ -25,13 +25,14 @@ pipeline {
     stage('Post Build'){
     steps{
     copyArtifacts(projectName: 'Discord Bot Deployment',selector: specific("${BUILD_NUMBER}"), target:"/discordbot/crazyjavascientist/cjs/")
-
     }
     }
-    stage('Run Jar')
+    stage('Run Jar'){
     steps{
-    sh 'bash /discordbot/crazyjavascientist/cjs/run_cjs.sh'
+        sh 'bash /discordbot/crazyjavascientist/cjs/run_cjs.sh'
+        }
     }
+
   }
 }
 

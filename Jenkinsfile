@@ -29,12 +29,8 @@ pipeline {
     }
     stage('Run Jar'){
     steps{
-     sh 'echo \'Starting Jar Process\''
-     sh 'BUILD_ID=dontKillMe'
-     sh 'JENKINS_NODE_COOKIE=dontKillMe'
-     sh '(nohup java -Dhudson.util.ProcessTree.disable=true -jar -Dspring.profiles.active=server /discordbot/crazyjavascientist/cjs/build/libs/cjs-1.jar > /dev/null &)'
+     sh '(JENKINS_NODE_COOKIE=dontKillMe nohup java -Dhudson.util.ProcessTree.disable=true -jar -Dspring.profiles.active=server /discordbot/crazyjavascientist/cjs/build/libs/cjs-1.jar > /dev/null &)'
      sh 'ps -ef | grep cjs-1.jar'
-     sh 'echo \'Finishing Jar Running Processes...\''
    }
     }
   }

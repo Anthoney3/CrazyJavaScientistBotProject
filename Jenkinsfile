@@ -6,6 +6,19 @@ pipeline {
     disableConcurrentBuilds()
     copyArtifactPermission('Discord Bot Deployment')
   }
+  node {
+    def remote = [:]
+    remote.name = '192.168.3.177'
+    remote.host = '192.168.3.177'
+    remote.user = 'CYBER\\Antho'
+    remote.password = '2205'
+    remote.port = '22'
+    remote.allowAnyHosts = true
+    stage('Remote SSH') {
+      sshCommand remote: remote, command: "ls -lrt"
+      sshCommand remote: remote, command: "for i in {1..5}; do echo -n \"Loop \$i \"; date ; sleep 1; done"
+    }
+  }
   stages{
     stage('build') {
       steps {
@@ -27,10 +40,6 @@ pipeline {
     copyArtifacts(projectName: 'Discord Bot Deployment',selector: specific("${BUILD_NUMBER}"), target:"/discordbot/crazyjavascientist/cjs/")
     }
     }
-    stage('Run Jar'){
-    steps{
-     sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /var/lib/jenkins/jobs/\'Discord Bot Deployment\'/builds/${BUILD_NUMBER}/archive/build/libs/cjs-1.jar &'
-   }
     }
   }
 }

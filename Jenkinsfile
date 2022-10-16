@@ -30,19 +30,8 @@ pipeline {
     stage('Run Jar'){
     steps{
 
-    node {
-      def remote = [:]
-      remote.name = 'discordbotcjs'
-      remote.host = 'discordbotcjs.crazyjavascientist'
-      remote.user = 'root'
-      remote.password = 'AuroraWolf22'
-      remote.allowAnyHosts = true
-
-    }
-
     dir('/discordbot/crazyjavascientist/cjs/builds/libs/') {
-    sshCommand remote: remote, command: "JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &"
-//         sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &'
+        sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &'
     }
     }
     }

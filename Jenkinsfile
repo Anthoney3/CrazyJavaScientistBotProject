@@ -22,13 +22,34 @@ pipeline {
         archiveArtifacts(artifacts: '**/*.jar', followSymlinks: false)
       }
     }
-    stage('Post Build'){
+    stage('Copy Artifacts'){
     steps{
     copyArtifacts(projectName: 'Discord Bot Deployment',selector: specific("${BUILD_NUMBER}"), target:"/discordbot/crazyjavascientist/cjs/")
     }
     }
     stage('Run Jar'){
-    steps{sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server /discordbot/crazyjavascientist/cjs/build/libs/cjs-1.jar &'}
+    steps{
+
+    node {
+      def remote = [:]
+      remote.name = 'discordbotcjs'
+      remote.host = 'discordbotcjs.crazyjavascientist'
+      remote.user = 'root'
+      remote.password = 'AuroraWolf22'
+      remote.allowAnyHosts = true
+
+    }
+
+    dir('/discordbot/crazyjavascientist/cjs/builds/libs/') {
+    sshCommand remote: remote, command: "JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &"
+//         sh 'JENKINS_NODE_COOKIE=dontKillMe nohup java -jar -Dspring.profiles.active=server cjs-1.jar &'
+    }
+    }
+    }
+    stage('Post Build'){
+    steps{
+    emailext attachLog: true, recipientProviders: [developers(), buildUser()], subject: 'Build ${BUILD_NUMBER} Status', to: 'AnthoneyChiocca.ac@gmail.com'
+    }
     }
   }
 }

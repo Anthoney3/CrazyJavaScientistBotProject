@@ -29,9 +29,7 @@ pipeline {
     }
     stage('Run Jar'){
     steps{
-        dir('/discordbot/crazyjavascientist/cjs/') {
-                sh 'bash run_cjs.sh'
-            }
+        sh '/discordbot/crazyjavascientist/cjs/./run_cjs.sh'
 
     }
     }

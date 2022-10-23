@@ -1,6 +1,9 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.DuelAnnouncer;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.GenerateVsImageUtil;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
@@ -8,6 +11,9 @@ import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -28,7 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Data
+@Getter
+@Setter
+@ToString
 @Component
 public class DiscordBotConfigJDAStyle {
 
@@ -57,6 +65,13 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private OsuUtils osuUtils;
 
+   /* @Autowired
+    private DuelAnnouncer duelAnnouncer;
+*/
+
+   /* @Autowired
+    private GenerateVsImageUtil generateVsImageUtil;*/
+
     public  void init() throws IOException, LoginException {
 
         config = Dotenv.configure().load();
@@ -76,6 +91,12 @@ public class DiscordBotConfigJDAStyle {
         if(osuApiModelI.getAllMemberInfo().isEmpty()) {
             osuUtils.populateDBOnStartWithOsuRecords(shardManager);
         }
+
+     /*   try {
+            generateVsImageUtil.generateVsImage();
+        }catch (Exception e){
+            log.error("Exception Thrown: {}",e.getMessage(),e);
+        }*/
 
 
     }

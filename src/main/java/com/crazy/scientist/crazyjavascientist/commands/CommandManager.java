@@ -51,15 +51,16 @@ public class CommandManager extends ListenerAdapter {
             Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"),
             Commands.slash("logout", "Kills the bot and shuts it down"),
             Commands.slash("delete-task-list", "Allows you to delete a task list by its title")
-                    .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true)
+                    .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true),
+            Commands.slash("get-message-history", "Shows Server Message History.")
+                    .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true)
     ));
     private final List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats", "Gets a user's stats for osu").addOption(OptionType.STRING, "username", "Uses the users server name to search for stats; Ex. 1 searches for 1's stats", true)));
 
 
     private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
                     .addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
-            Commands.slash("get-message-history", "Shows Server Message History.")
-                    .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true),
+
             Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
             Commands.slash("get-search-history", "Retrieves the bots google search history")));
 
@@ -138,8 +139,8 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();

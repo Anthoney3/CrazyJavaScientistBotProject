@@ -54,13 +54,16 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private OsuApiCall osuApiCall;
 
+    @Autowired
+    private OsuUtils osuUtils;
+
     public  void init() throws IOException, LoginException {
 
         config = Dotenv.configure().load();
 
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
         builder.setStatus(OnlineStatus.ONLINE);
-        builder.setActivity(Activity.watching("Porn"));
+        builder.setActivity(Activity.watching("His Owner Cringe"));
         builder.setMemberCachePolicy(MemberCachePolicy.ALL);
         builder.enableIntents(GatewayIntent.GUILD_MEMBERS,GatewayIntent.GUILD_MESSAGES,GatewayIntent.GUILD_MESSAGE_TYPING,GatewayIntent.GUILD_PRESENCES);
 
@@ -71,7 +74,7 @@ public class DiscordBotConfigJDAStyle {
         oAuthToken.getOsuOAuthToken(shardManager);
 
         if(osuApiModelI.getAllMemberInfo().isEmpty()) {
-            osuApiCall.populateDBOnStartWithOsuRecords(shardManager);
+            osuUtils.populateDBOnStartWithOsuRecords(shardManager);
         }
 
 

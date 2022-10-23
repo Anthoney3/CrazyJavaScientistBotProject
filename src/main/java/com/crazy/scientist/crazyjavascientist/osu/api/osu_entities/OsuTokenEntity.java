@@ -1,15 +1,14 @@
-package com.crazy.scientist.crazyjavascientist.osu.api.osu_models;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_entities;
 
 import lombok.Data;
 
-import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.time.ZonedDateTime;
 
 @Entity
 @Data
 @Table(name = "TOKEN")
-public class OsuTokenModel  {
+public class OsuTokenEntity {
 
 
     @Id
@@ -22,12 +21,12 @@ public class OsuTokenModel  {
     @Column(name="TOKEN_RENEWAL_TIME")
     private ZonedDateTime tokenRenewalTime;
 
-    public OsuTokenModel(byte[] token, ZonedDateTime tokenRenewalTime) {
+    public OsuTokenEntity(byte[] token, ZonedDateTime tokenRenewalTime) {
         this.token = token;
         this.tokenRenewalTime = tokenRenewalTime;
     }
 
-    public OsuTokenModel() {
+    public OsuTokenEntity() {
 
     }
 }

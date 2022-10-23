@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.osu.api.osu_models;
+package com.crazy.scientist.crazyjavascientist.osu.api.osu_enums;
 
 import lombok.Getter;
 

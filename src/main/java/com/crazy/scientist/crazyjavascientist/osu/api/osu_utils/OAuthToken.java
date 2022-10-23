@@ -1,6 +1,6 @@
 package com.crazy.scientist.crazyjavascientist.osu.api.osu_utils;
 
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_models.OsuTokenModel;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_entities.OsuTokenEntity;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuTokenModelI;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +72,7 @@ public class OAuthToken {
 
             if (!responseObject.isEmpty()) {
 
-                OsuTokenModel tokenObject = new OsuTokenModel();
+                OsuTokenEntity tokenObject = new OsuTokenEntity();
 
 
                 tokenObject.setTokenRenewalTime(ZonedDateTime.now());
@@ -144,7 +144,7 @@ public class OAuthToken {
 
             if (!responseObject.isEmpty()) {
 
-                OsuTokenModel renewedTokenObject = new OsuTokenModel();
+                OsuTokenEntity renewedTokenObject = new OsuTokenEntity();
 
                 renewedTokenObject.setTokenRenewalTime(ZonedDateTime.now());
 
@@ -156,6 +156,7 @@ public class OAuthToken {
                 renewedTokenObject.setToken(responseObject.get("access_token").toString().getBytes(StandardCharsets.UTF_8));
 
                 osuTokenModelI.updateTokenAndRenewalTime(renewedTokenObject.getToken(), renewedTokenObject.getTokenRenewalTime());
+
 
 
             } else {

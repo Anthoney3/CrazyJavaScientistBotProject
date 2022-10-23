@@ -1,16 +1,13 @@
 package com.crazy.scientist.crazyjavascientist.config;
 
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.DuelAnnouncer;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.GenerateVsImageUtil;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

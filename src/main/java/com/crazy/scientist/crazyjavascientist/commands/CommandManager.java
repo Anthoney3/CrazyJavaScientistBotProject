@@ -1,15 +1,15 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
-import com.crazy.scientist.crazyjavascientist.models.UserTaskTable;
-import com.crazy.scientist.crazyjavascientist.osu.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -25,6 +25,9 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Slf4j
+@Getter
+@Setter
+@ToString
 @Component
 public class CommandManager extends ListenerAdapter {
 
@@ -46,21 +49,24 @@ public class CommandManager extends ListenerAdapter {
     private UserTaskTableI userTaskTableI;
 
 
+
+
     private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
                     .addOption(OptionType.BOOLEAN, "email", "Sends an email to the bot owner with the feedback given", true),
             Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"),
+            Commands.slash("logout", "Kills the bot and shuts it down"),
             Commands.slash("delete-task-list", "Allows you to delete a task list by its title")
-                    .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true)
+                    .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true),
+            Commands.slash("get-message-history", "Shows Server Message History.")
+                    .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true)
     ));
     private final List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats", "Gets a user's stats for osu").addOption(OptionType.STRING, "username", "Uses the users server name to search for stats; Ex. 1 searches for 1's stats", true)));
 
 
     private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
                     .addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
-            Commands.slash("get-message-history", "Shows Server Message History.")
-                    .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true),
+
             Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
-            Commands.slash("logout", "Kills the bot and shuts it down"),
             Commands.slash("get-search-history", "Retrieves the bots google search history")));
 
 
@@ -90,26 +96,6 @@ public class CommandManager extends ListenerAdapter {
                 case "create-task-list" -> taskManager.createNewUserList(isAllowedToUseCommand, event);
                 case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(isAllowedToUseCommand, event);
                 default -> {
-                       /* if (command.equalsIgnoreCase("get-message-history")) {
-
-
-
-                            Message lastMessage = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("msg-id")).getAsString()).complete();
-
-                            if (lastMessage.getReferencedMessage() == null) {
-                                if (lastMessage.getAttachments().isEmpty()) {
-                                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getJumpUrl()).queue();
-                                } else {
-                                    event.getChannel().sendMessageFormat("%s%n%nTake a look Here!%n%s", lastMessage.getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                                    log.info(lastMessage.toString());
-                                }
-                            } else {
-                                event.getChannel().sendMessageFormat("%s%n%s", lastMessage.getReferencedMessage().getContentDisplay(), lastMessage.getAttachments().get(0).getUrl()).queue();
-                                log.info(lastMessage.toString());
-                            }
-
-
-                        }*/
                     if (command.equalsIgnoreCase("add-to-showcase")) {
 
 
@@ -137,7 +123,6 @@ public class CommandManager extends ListenerAdapter {
                 }
             }
 
-
         } catch (Exception e) {
 
                 event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
@@ -159,13 +144,16 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+            case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
         }
 
     }
+
+
 
 
     @Override

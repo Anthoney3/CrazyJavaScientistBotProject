@@ -137,17 +137,13 @@ public class GoogleSearch extends ListenerAdapter {
 
                 EmbedBuilder embedBuilder = new EmbedBuilder().setTitle("First 10 Image Results:" + commandStringSanitized.replaceAll("%20", " "));
 
-                for (int i = 0; i < 10; i++) {
-
-                    images.add(new EmbedBuilder().setImage(imageUrls.get(i)).build());
-                }
 
 
-                for (int i = 0; i < 10; i++) {
 
-                    embedBuilder.addField("Image" + (i + 1) + ": ", imageUrls.get(i) + "\n\n", false);
-                }
-                event.replyEmbeds(images).queue();
+                    embedBuilder.setTitle( "Google Search: " + "\"" + event.getCommandString().replaceAll("/search prompt:","").trim() + "\"");
+                    embedBuilder.setImage(imageUrls.get(1));
+
+                event.replyEmbeds(embedBuilder.build()).queue();
 
             } catch (Exception e) {
 

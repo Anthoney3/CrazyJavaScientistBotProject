@@ -1,14 +1,14 @@
 package com.crazy.scientist.crazyjavascientist;
 
 import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 
+@EnableScheduling
 @SpringBootApplication
 public class CrazyJavaScientistApplication {
 
@@ -19,6 +19,7 @@ public class CrazyJavaScientistApplication {
 
 
         SpringApplication.run(CrazyJavaScientistApplication.class,args).getBean(DiscordBotConfigJDAStyle.class).init();
+
 
 
     }

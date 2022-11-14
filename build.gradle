@@ -1,12 +1,29 @@
+buildscript {
+
+    repositories {
+        mavenCentral(
+        )
+    }
+    dependencies {
+
+        classpath('org.springframework.boot:spring-boot-starter-web:2.7.3')
+        classpath('org.springframework.boot:spring-boot-starter-actuator:2.7.4')
+    }
+}
+
+
+
+
 plugins {
-    id 'org.springframework.boot' version '2.7.3'
+    id 'org.springframework.boot' version '2.7.4'
     id 'io.spring.dependency-management' version '1.0.13.RELEASE'
     id 'java'
 }
 
 group = 'com.crazy.scientist'
-version = '0.0.1-SNAPSHOT'
+version = '1'
 sourceCompatibility = '17'
+
 
 configurations {
     runtimeClasspath {
@@ -28,10 +45,24 @@ dependencies {
     implementation 'com.sun.mail:javax.mail:1.6.2'
     implementation 'io.github.cdimascio:dotenv-java:2.2.4'
     implementation 'club.minnced:discord-webhooks:0.8.2'
-//    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.2'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.7.3'
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'mysql:mysql-connector-java:8.0.30'
     implementation 'com.h2database:h2:2.1.214'
+    implementation 'com.twilio.sdk:twilio:9.0.1'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.7.4'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.0-rc1'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+
+
+
+
+
+
+
+
+
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'

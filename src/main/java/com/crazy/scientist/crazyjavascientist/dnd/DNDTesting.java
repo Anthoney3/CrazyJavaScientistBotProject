@@ -82,6 +82,9 @@ public class DNDTesting extends ListenerAdapter {
         Query getExcusedQuery = entityManager.createNativeQuery("SELECT EXCUSED FROM DND_ATTENDANCE_INFO WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
         Query getUsersRealName = entityManager.createNativeQuery("SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?");
 
+
+
+
         getAttendingQuery.setParameter(1, event.getUser().getId());
         getExcusedQuery.setParameter(1, event.getUser().getId());
         getUsersRealName.setParameter(1, event.getUser().getId());

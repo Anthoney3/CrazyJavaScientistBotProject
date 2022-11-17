@@ -80,6 +80,7 @@ public class DiscordBotConfigJDAStyle {
 
         shardManager.addEventListener(command_manager,message_event_listeners, greet,dnd_testing);
 
+
         o_auth_token.getOsuOAuthToken(shardManager);
 
         if(osu_api_model_interface.getAllMemberInfo().isEmpty()) {

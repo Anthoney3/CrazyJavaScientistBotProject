@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.utils;
+package com.crazy.scientist.crazyjavascientist.schedulers;
 
 import com.crazy.scientist.crazyjavascientist.utils.models.PhoneNumbers;
 import com.twilio.Twilio;
@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.Calendar;
 
 @Slf4j
 @Component
@@ -22,12 +23,17 @@ public class SendSMSMessage {
 
     @Scheduled(cron = "${sms.w2w.reminder.cron.job}")
     public void sendTextWhenReadyForW2WSubmission(){
-        Twilio.init(smsConfig.get("TWILIO_SID"), smsConfig.get("TWILIO_AUTH_ID"));
-        Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
-        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wAnthonyMessage.getBody(), w2wAnthonyMessage.getTo(),w2wAnthonyMessage.getDateCreated());
-        Message w2wZachMessage = Message.creator(new PhoneNumber(PhoneNumbers.ZACH.getPhoneNumber()),new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()),msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
-        log.info("Message with body: \"{}\" sent to {} at {} Successfully",w2wZachMessage.getBody(), w2wZachMessage.getTo(),w2wZachMessage.getDateCreated());
 
+        Calendar calendar = Calendar.getInstance();
+
+        if(calendar.get(Calendar.DAY_OF_MONTH) <= 7 && calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY) {
+
+            Twilio.init(smsConfig.get("TWILIO_SID"), smsConfig.get("TWILIO_AUTH_ID"));
+            Message w2wAnthonyMessage = Message.creator(new PhoneNumber(PhoneNumbers.ANTHONY.getPhoneNumber()), new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()), msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
+            log.info("Message with body: \"{}\" sent to {} at {} Successfully", w2wAnthonyMessage.getBody(), w2wAnthonyMessage.getTo(), w2wAnthonyMessage.getDateCreated());
+            Message w2wZachMessage = Message.creator(new PhoneNumber(PhoneNumbers.ZACH.getPhoneNumber()), new PhoneNumber(PhoneNumbers.TWILIO.getPhoneNumber()), msgToSend).setStatusCallback(URI.create("http://209.127.178.46/api/message-status")).create();
+            log.info("Message with body: \"{}\" sent to {} at {} Successfully", w2wZachMessage.getBody(), w2wZachMessage.getTo(), w2wZachMessage.getDateCreated());
+        }
     }
 
 

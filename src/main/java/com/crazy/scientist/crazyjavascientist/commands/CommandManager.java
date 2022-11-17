@@ -1,5 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
+import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
+import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
@@ -48,6 +50,8 @@ public class CommandManager extends ListenerAdapter {
     @Autowired
     private UserTaskTableI userTaskTableI;
 
+    @Autowired
+    private DNDTesting dndTesting;
 
 
 
@@ -65,10 +69,12 @@ public class CommandManager extends ListenerAdapter {
 
     private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
                     .addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
-
             Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
-            Commands.slash("get-search-history", "Retrieves the bots google search history")));
+            Commands.slash("get-search-history", "Retrieves the bots google search history"),
+            Commands.slash("dnd-test","A current Test setup for DND purposes.")
+           ));
 
+//     Commands.slash("dnd-test","A current Test setup for DND purposes.")
 
     public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, GoogleSearch googleSearch, ShutdownBot shutdownBot) {
         this.feedBackCommand = feedBackCommand;
@@ -95,6 +101,7 @@ public class CommandManager extends ListenerAdapter {
                 case "get-osu-stats" -> osuApiCall.makeOsuAPICall(event);
                 case "create-task-list" -> taskManager.createNewUserList(isAllowedToUseCommand, event);
                 case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(isAllowedToUseCommand, event);
+                case "dnd-test" -> dndTesting.testingEmbedsWithActionRows(isAllowedToUseCommand,event);
                 default -> {
                     if (command.equalsIgnoreCase("add-to-showcase")) {
 
@@ -144,8 +151,8 @@ public class CommandManager extends ListenerAdapter {
 
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
-//                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
+//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
             case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();

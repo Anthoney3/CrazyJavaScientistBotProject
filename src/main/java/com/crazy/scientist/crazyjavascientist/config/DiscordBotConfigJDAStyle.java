@@ -2,11 +2,14 @@ package com.crazy.scientist.crazyjavascientist.config;
 
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
+import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
+import com.jagrosh.jdautilities.command.CommandClientBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +22,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
-import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,8 +29,13 @@ import org.springframework.stereotype.Component;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+
+import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.*;
 
 @Slf4j
 @Getter
@@ -37,66 +44,100 @@ import java.util.List;
 @Component
 public class DiscordBotConfigJDAStyle {
 
-    private Dotenv config;
-
-    public static ShardManager shardManager ;
 
     @Autowired
-    private OAuthToken oAuthToken;
-
+    private  OAuthToken o_auth_token;
     @Autowired
-    private CommandManager commandManager;
-
+    private  CommandManager command_manager;
     @Autowired
-    private MessageEventListeners messageEventListeners;
-
+    private  MessageEventListeners message_event_listeners;
     @Autowired
-    private Greetings greetings;
-
+    private  Greetings greet;
     @Autowired
-    private OsuApiModelI osuApiModelI;
-
+    private  OsuApiModelI osu_api_model_interface;
     @Autowired
-    private OsuApiCall osuApiCall;
-
+    private  OsuApiCall osu_api_call;
     @Autowired
-    private OsuUtils osuUtils;
+    private  OsuUtils osu_utils;
+    @Autowired
+    private  DNDTesting dnd_testing;
+    @Autowired
+    private  DNDAttendanceRepo attendance_repo;
 
-   /* @Autowired
-    private DuelAnnouncer duelAnnouncer;
-*/
-
-   /* @Autowired
-    private GenerateVsImageUtil generateVsImageUtil;*/
-
-    public  void init() throws IOException, LoginException {
+    public void init() throws IOException, LoginException {
 
         config = Dotenv.configure().load();
 
+
+
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
         builder.setStatus(OnlineStatus.ONLINE);
-        builder.setActivity(Activity.watching("His Owner Cringe"));
+        builder.setActivity(Activity.watching("TV Static"));
         builder.setMemberCachePolicy(MemberCachePolicy.ALL);
         builder.enableIntents(GatewayIntent.GUILD_MEMBERS,GatewayIntent.GUILD_MESSAGES,GatewayIntent.GUILD_MESSAGE_TYPING,GatewayIntent.GUILD_PRESENCES);
 
         shardManager = builder.build();
 
-        shardManager.addEventListener(commandManager, messageEventListeners, greetings);
+        shardManager.addEventListener(command_manager,message_event_listeners, greet,dnd_testing);
 
-        oAuthToken.getOsuOAuthToken(shardManager);
+        o_auth_token.getOsuOAuthToken(shardManager);
 
-        if(osuApiModelI.getAllMemberInfo().isEmpty()) {
-            osuUtils.populateDBOnStartWithOsuRecords(shardManager);
+        if(osu_api_model_interface.getAllMemberInfo().isEmpty()) {
+            osu_utils.populateDBOnStartWithOsuRecords(shardManager);
         }
 
-     /*   try {
-            generateVsImageUtil.generateVsImage();
-        }catch (Exception e){
-            log.error("Exception Thrown: {}",e.getMessage(),e);
-        }*/
+        //Updates Current Week to the
+        List<ZonedDateTime> current_week_dates = new ArrayList<>();
+
+
+
+        Calendar calendar = Calendar.getInstance();
+        ZonedDateTime current_week = ZonedDateTime.now();
+        String log_text = "Current Week Updated to : ";
+
+        switch(calendar.get(Calendar.DAY_OF_WEEK)){
+
+            case Calendar.MONDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.TUESDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(1).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(1).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.WEDNESDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(2).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(2).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.THURSDAY->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(3).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(3).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.FRIDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(4).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(4).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.SATURDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+            case Calendar.SUNDAY ->  {
+                attendance_repo.updateCurrentWeek(current_week.minusDays(6).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                log.info("{}{}",log_text,current_week.minusDays(6).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                break;
+            }
+
+        }
 
 
     }
+
 
 
     @Scheduled(cron = "0 16 22 *  * FRI")

@@ -44,6 +44,7 @@ import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardMan
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 @SpringBootTest(classes = CrazyJavaScientistApplication.class)
 @ActiveProfiles("testing")
 public class IntegrationTest {

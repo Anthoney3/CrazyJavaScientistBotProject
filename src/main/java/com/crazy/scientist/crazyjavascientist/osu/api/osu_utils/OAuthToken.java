@@ -5,6 +5,7 @@ import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuTokenModelI;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import org.apache.http.impl.client.SystemDefaultHttpClient;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;

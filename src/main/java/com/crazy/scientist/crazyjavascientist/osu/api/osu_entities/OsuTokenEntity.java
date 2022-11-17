@@ -1,12 +1,14 @@
 package com.crazy.scientist.crazyjavascientist.osu.api.osu_entities;
 
 import lombok.Data;
+import org.springframework.context.annotation.Profile;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
 
 @Entity
 @Data
+@Profile(value = "server")
 @Table(name = "TOKEN")
 public class OsuTokenEntity {
 

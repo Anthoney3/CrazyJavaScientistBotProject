@@ -25,6 +25,8 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+**/resources/custom_scratch_sql.sql
+**/resources/.env
 
 ### NetBeans ###
 /nbproject/private/

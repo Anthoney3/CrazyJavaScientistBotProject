@@ -66,7 +66,7 @@ public class DNDScheduledTasks {
     private String db_password;
 
 
-    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
+//    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
     public void showUpdateForWhoWillBeAttending() throws SQLException {
 
         TextChannel channel = shardManager.getGuildsByName("The Java Way",true).get(0)
@@ -178,7 +178,7 @@ public class DNDScheduledTasks {
         log.info("Status Update Task Finished in : {}",stopwatch.elapsed());
     }
 
-    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
+//    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
     public void refreshDNDAttendance(){
 
         TextChannel channel = shardManager.getGuildsByName("The Java Way",true).get(0)
@@ -251,7 +251,7 @@ public class DNDScheduledTasks {
 
     @Transactional
     @Modifying
-    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
+//    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
     public void sendAttendanceRequestEmbed() {
 
         Query update_embed_creation_time = entityManager.createNativeQuery("UPDATE CURRENT_WEEK_OF SET ATTENDANCE_EMBED_CREATION_TIME=? WHERE ID=1");
@@ -262,11 +262,12 @@ public class DNDScheduledTasks {
         Button excused_button = Button.danger("excused_button", Emoji.fromUnicode("\uD83D\uDE2D"));
         Button attending_button = Button.success("attending_button", Emoji.fromUnicode("\uD83C\uDF5E"));
         Button remove_button = Button.secondary("remove_button", Emoji.fromUnicode("\uD83D\uDDD1"));
+        Button alpharius_button = Button.success("alpharius_button",Emoji.fromMarkdown("<:alpharius:1045825620300529818>"));
 
         MessageEmbed builder = new EmbedBuilder().setTitle("DND Session Attendance").setTimestamp(ZonedDateTime.now())
                 .setThumbnail("https://yawningportal.org/wp-content/uploads/2019/09/dnddescentkeyartjpg-1.jpeg").build();
 
-        Message message = new MessageBuilder().setActionRows(ActionRow.of(attending_button, excused_button, remove_button))
+        Message message = new MessageBuilder().setActionRows(ActionRow.of(attending_button,alpharius_button, excused_button, remove_button))
                 .setContent("@here")
                 .setEmbeds(builder).build();
 

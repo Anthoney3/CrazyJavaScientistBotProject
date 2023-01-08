@@ -1,6 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.dnd.dnd_repos;
 
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDPlayersEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,8 +34,11 @@ public interface DNDAttendanceRepo extends JpaRepository<DNDAttendanceEntity,Lon
                                       @Param("excused_players_list")String excused_players_list,
                                       @Param("no_show_players_list")String no_show_players_list);
 
+    @Query(value = "SELECT dnd_player_info from DNDPlayersEntity dnd_player_info")
+    List<DNDPlayersEntity> getDNDPlayersInfo();
+
     @Transactional
-    @Query(value = "SELECT * FROM DND_ATTENDANCE_INFO",nativeQuery = true)
+    @Query(value = "SELECT INFO FROM DNDAttendanceEntity INFO")
     List<DNDAttendanceEntity> getDNDAttendance();
 
     @Transactional

@@ -95,8 +95,12 @@ public class IntegrationTest {
         }
 
         if(!initialize_shard_manager){
-            config.init();
-            initialize_shard_manager = true;
+            try {
+                config.init();
+                initialize_shard_manager = true;
+            }catch (Exception e){
+                throw new RuntimeException(e.getCause());
+            }
         }
     }
 

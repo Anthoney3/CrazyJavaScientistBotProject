@@ -9,8 +9,9 @@ import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
-import com.jagrosh.jdautilities.command.CommandClientBuilder;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.crazy.scientist.crazyjavascientist.security.EncyrptorAESGCM;
+import com.crazy.scientist.crazyjavascientist.security.entities.CJSConfigEntity;
+import com.crazy.scientist.crazyjavascientist.security.repos.CJSConfigRepo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -24,18 +25,20 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.security.auth.login.LoginException;
-import java.io.IOException;
+import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
-import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.*;
+import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.dnd_players;
+import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
 
 @Slf4j
 @Getter
@@ -64,13 +67,31 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private  DNDAttendanceRepo attendance_repo;
 
-    public void init() throws IOException, LoginException {
+    @Autowired
+    private EncyrptorAESGCM encryptor;
 
-        config = Dotenv.configure().load();
+    @Autowired
+    private CJSConfigRepo cjsConfigRepo;
+
+    @Value("${aes.info}")
+    private String aes_info;
+
+    public static HashMap<String,String> auth_info = new HashMap<>();
+
+    public void init() throws Exception {
+
+        try {
+//            populateDBWithEncryptedData();
+            getAuthInfo();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
 
 
-        DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(config.get("TOKEN"));
+        auth_info.forEach((key,value) -> log.info("{}: {}",key,value));
+
+        DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(encryptor.decrypt(auth_info.get("BOT"),aes_info));
         builder.setStatus(OnlineStatus.ONLINE);
         builder.setActivity(Activity.watching("TV Static"));
         builder.setMemberCachePolicy(MemberCachePolicy.ALL);
@@ -82,6 +103,11 @@ public class DiscordBotConfigJDAStyle {
 
 
         o_auth_token.getOsuOAuthToken(shardManager);
+
+
+
+
+
 
         if(osu_api_model_interface.getAllMemberInfo().isEmpty()) {
             osu_utils.populateDBOnStartWithOsuRecords(shardManager);
@@ -136,7 +162,27 @@ public class DiscordBotConfigJDAStyle {
 
         }
 
+        if(!new File("./logs/cjs.log").exists()){
+            log.info("Log Directory Not Found...Attempting to create new log directory");
+            log.info("{}",(new File("./logs").mkdir())? "New Log Directory Created Successfully" : "Log Directory Creation Failed");
+        }
 
+
+    }
+
+
+    public void setup_static_data(){
+
+        dnd_players = attendance_repo.getDNDPlayersInfo();
+
+    }
+    void getAuthInfo() {
+
+        List<CJSConfigEntity> cjs_entites = cjsConfigRepo.findAll().stream().filter(item -> item.getStatus().equalsIgnoreCase("a")).toList();
+
+        cjs_entites.stream().forEach(item -> {
+            auth_info.put(item.getShort_name(), item.getKey_value());
+        });
     }
 
 

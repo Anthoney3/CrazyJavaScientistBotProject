@@ -17,19 +17,25 @@ public class DNDAttendanceHistoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name="PLAYERNAME")
-    private String player_name;
+    @Column(name = "PLAYERS_ATTENDED")
+    private int players_attended;
 
-    @Column(name = "ATTENDED")
-    private String attended;
+    @Column(name = "PLAYERS_EXCUSED")
+    private int players_excused;
 
-    @Column(name="NO_SHOW")
-    private String no_show;
+    @Column(name = "PLAYERS_NO_SHOW_OR_NO_RESPONSE")
+    private int players_no_show;
 
-    @Column(name="EXCUSED")
-    private String excused;
+    @Column(name="PLAYERS_NAMES_ATTENDED")
+    private String players_names_attended;
 
-    @Column(name="WEEK_OF")
-    private String week_of;
+    @Column(name = "PLAYERS_NAMES_EXCUSED")
+    private String players_names_excused;
+
+    @Column(name="PLAYERS_NAMES_NO_SHOW_OR_NO_RESPONSE")
+    private String players_names_no_show;
+
+    @Column(name="WEEK_OF_ATTENDANCE")
+    private String week_of_attendance;
 
 }

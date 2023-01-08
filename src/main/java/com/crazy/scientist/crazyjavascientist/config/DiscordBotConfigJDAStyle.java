@@ -3,13 +3,17 @@ package com.crazy.scientist.crazyjavascientist.config;
 import com.crazy.scientist.crazyjavascientist.commands.CommandManager;
 import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.CurrentWeekOfEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
-import com.crazy.scientist.crazyjavascientist.security.EncyrptorAESGCM;
+import com.crazy.scientist.crazyjavascientist.security.EncryptorAESGCM;
 import com.crazy.scientist.crazyjavascientist.security.entities.CJSConfigEntity;
 import com.crazy.scientist.crazyjavascientist.security.repos.CJSConfigRepo;
 import lombok.Getter;
@@ -26,16 +30,17 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.dnd_players;
 import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
@@ -65,31 +70,41 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private  DNDTesting dnd_testing;
     @Autowired
-    private  DNDAttendanceRepo attendance_repo;
+    private CurrentWeekOfRepo currentWeekOfRepo;
 
     @Autowired
-    private EncyrptorAESGCM encryptor;
+    private DNDPlayersRepo dndPlayersRepo;
+
+    @Autowired
+    private DNDAttendanceRepo dndAttendanceRepo;
+    @Autowired
+    private EncryptorAESGCM encryptor;
 
     @Autowired
     private CJSConfigRepo cjsConfigRepo;
 
+    @Autowired
+    private PopulateAuthenticationInformation populateAuthenticationInformation;
+
     @Value("${aes.info}")
     private String aes_info;
 
-    public static HashMap<String,String> auth_info = new HashMap<>();
+    public static HashMap<String,String> auth_info;
+    public static HashMap<Long,DNDAttendanceEntity> player_responses;
+
+
 
     public void init() throws Exception {
 
         try {
-//            populateDBWithEncryptedData();
-            getAuthInfo();
+            if(cjsConfigRepo.count() == 0)
+                populateAuthenticationInformation.populateAuthenticaitonInformation();
+            getSetupInformation();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
 
-
-        auth_info.forEach((key,value) -> log.info("{}: {}",key,value));
 
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(encryptor.decrypt(auth_info.get("BOT"),aes_info));
         builder.setStatus(OnlineStatus.ONLINE);
@@ -104,62 +119,22 @@ public class DiscordBotConfigJDAStyle {
 
         o_auth_token.getOsuOAuthToken(shardManager);
 
-
-
-
-
-
         if(osu_api_model_interface.getAllMemberInfo().isEmpty()) {
             osu_utils.populateDBOnStartWithOsuRecords(shardManager);
         }
 
-        //Updates Current Week to the
-        List<ZonedDateTime> current_week_dates = new ArrayList<>();
 
-
-
-        Calendar calendar = Calendar.getInstance();
+        int current_day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         ZonedDateTime current_week = ZonedDateTime.now();
-        String log_text = "Current Week Updated to : ";
 
-        switch(calendar.get(Calendar.DAY_OF_WEEK)){
 
-            case Calendar.MONDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.TUESDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(1).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(1).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.WEDNESDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(2).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(2).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.THURSDAY->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(3).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(3).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.FRIDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(4).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(4).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.SATURDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
-            case Calendar.SUNDAY ->  {
-                attendance_repo.updateCurrentWeek(current_week.minusDays(6).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                log.info("{}{}",log_text,current_week.minusDays(6).format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
-                break;
-            }
+        if(currentWeekOfRepo.findAll().size() >0)
+            currentWeekOfRepo.deleteAll();
 
+        if(current_day != Calendar.MONDAY) {
+            int days_to_be_sent_back = Math.abs(((current_day == 1) ? 8 : current_day) - Calendar.MONDAY);
+            currentWeekOfRepo.save(new CurrentWeekOfEntity(current_week.minusDays(days_to_be_sent_back).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy"))));
+            log.info("Current Week Updated to :{}",current_week.minusDays(days_to_be_sent_back).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy")));
         }
 
         if(!new File("./logs/cjs.log").exists()){
@@ -170,20 +145,15 @@ public class DiscordBotConfigJDAStyle {
 
     }
 
-
-    public void setup_static_data(){
-
-        dnd_players = attendance_repo.getDNDPlayersInfo();
-
-    }
-    void getAuthInfo() {
+    void getSetupInformation() {
 
         List<CJSConfigEntity> cjs_entites = cjsConfigRepo.findAll().stream().filter(item -> item.getStatus().equalsIgnoreCase("a")).toList();
-
-        cjs_entites.stream().forEach(item -> {
-            auth_info.put(item.getShort_name(), item.getKey_value());
-        });
+        auth_info = new HashMap<>(cjs_entites.stream().collect(Collectors.toMap(CJSConfigEntity::getShort_name,CJSConfigEntity::getKey_value)));
+        player_responses= new HashMap<>(dndAttendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity())));
     }
+
+
+
 
 
 

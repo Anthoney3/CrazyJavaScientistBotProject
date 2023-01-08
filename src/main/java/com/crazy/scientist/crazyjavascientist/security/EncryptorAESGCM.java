@@ -21,7 +21,7 @@ import java.util.Base64;
 import java.util.List;
 
 @Service
-public class EncyrptorAESGCM {
+public class EncryptorAESGCM {
 
     /**
      * AES-GCM inputs - 12 bytes IV, need the same IV and secret keys for encryption and decryption.

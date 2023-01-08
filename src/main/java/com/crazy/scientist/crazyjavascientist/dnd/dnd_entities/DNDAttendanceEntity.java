@@ -16,8 +16,8 @@ import javax.persistence.*;
 public class DNDAttendanceEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    @Column(name = "DISCORD_ID")
+    private long discord_id;
 
     @Column(name = "PLAYERS_NAME")
     private String players_name;

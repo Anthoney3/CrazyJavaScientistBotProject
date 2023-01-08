@@ -20,9 +20,6 @@ public class CrazyJavaScientistApplication {
 
         SpringApplication.run(CrazyJavaScientistApplication.class, args).getBean(DiscordBotConfigJDAStyle.class).init();
 
-
-
-
     }
 
 }

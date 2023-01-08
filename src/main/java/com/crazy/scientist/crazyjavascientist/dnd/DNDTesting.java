@@ -1,10 +1,12 @@
 package com.crazy.scientist.crazyjavascientist.dnd;
 
-import com.crazy.scientist.crazyjavascientist.config.StaticUtils;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
 import com.crazy.scientist.crazyjavascientist.utils.DBTablePrinter;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.MessageBuilder;
@@ -25,22 +27,22 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nonnull;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
+import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.player_responses;
 
 @Slf4j
 @Component
 @NoArgsConstructor
+@Getter
+@ToString
 public class DNDTesting extends ListenerAdapter {
 
     @Autowired
@@ -128,24 +130,15 @@ public class DNDTesting extends ListenerAdapter {
 
             EmbedBuilder builder = new EmbedBuilder(event.getInteraction().getMessage().getEmbeds().get(0));
 
-            //TODO: Move this code to the start up area and cache the results in a list that is static upon start up
-
-            Query getAttendingQuery = entityManager.createNativeQuery("SELECT ATTENDING FROM DND_ATTENDANCE_INFO WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-            Query getExcusedQuery = entityManager.createNativeQuery("SELECT EXCUSED FROM DND_ATTENDANCE_INFO WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-            Query getUsersRealName = entityManager.createNativeQuery("SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?");
 
 
-            getAttendingQuery.setParameter(1, event.getUser().getId());
-            getExcusedQuery.setParameter(1, event.getUser().getId());
-            getUsersRealName.setParameter(1, event.getUser().getId());
-
-            String users_real_name = getUsersRealName.getResultList().get(0).toString();
+            String users_real_name = player_responses.get(event.getUser().getIdLong()).getPlayers_name();
 
             String column_one_format = "```%-10.10s";
             String column_two_format = "%s```";
             String formatInfo = column_one_format + " " + column_two_format;
 
-            boolean hasResponded = getAttendingQuery.getResultList().get(0).toString().equalsIgnoreCase("Y") || getExcusedQuery.getResultList().get(0).toString().equalsIgnoreCase("Y");
+            boolean hasResponded = player_responses.get(event.getUser().getIdLong()).getNo_show().equalsIgnoreCase("n");
 
             if (hasResponded && !event.getButton().getId().equalsIgnoreCase("remove_button")) {
                 event.reply("Your Response has already been recorded, If you want to change it use the remove button first").setEphemeral(true).queue();
@@ -156,52 +149,41 @@ public class DNDTesting extends ListenerAdapter {
 
             } else if (hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
 
-                MessageEmbed incomingMessage = new EmbedBuilder(event.getInteraction().getMessage().getEmbeds().get(0)).build();
-
-                List<String> split_messages = new ArrayList<>(Stream.of(incomingMessage.getDescription().split("```")).filter(string -> !string.isEmpty()).toList());
+                List<String> split_messages = new ArrayList<>(Stream.of(builder.build().getDescription().split("```")).filter(string -> !string.isEmpty()).toList());
 
                 split_messages.removeIf(string -> string.contains(users_real_name));
 
                 StringBuilder build_message = new StringBuilder();
                 split_messages.forEach(message -> build_message.append(String.format("```%s```", message)));
 
-                EmbedBuilder edited_message = new EmbedBuilder(event.getInteraction().getMessage().getEmbeds().get(0));
+                builder.setDescription(build_message);
 
-                edited_message.setDescription(build_message);
+                player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"N","N","Y"));
 
-                log.info(build_message.toString());
-
-                MessageEmbed outgoingEmbed = edited_message.build();
-
-                Query updateResponseQuery = entityManager.createNativeQuery("UPDATE DND_ATTENDANCE_INFO SET EXCUSED='N',ATTENDING='N',NO_SHOW_OR_NO_RESPONSE='Y' WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-                updateResponseQuery.setParameter(1, event.getUser().getId());
-                updateResponseQuery.executeUpdate();
                 log.info("{}'s Response has been Updated to No Show as {} removed their response", users_real_name, users_real_name);
 
-                event.getInteraction().getMessage().editMessageEmbeds(outgoingEmbed).complete();
+                event.getInteraction().getMessage().editMessageEmbeds(builder.build()).complete();
 
                 event.reply("Your Response Has been Removed").setEphemeral(true).submit();
 
             } else {
 
-                if (event.getButton().getId().equalsIgnoreCase("alpharious_button")) {
-                    if (!event.getUser().getId().equalsIgnoreCase("204074647245815808") || !event.getUser().getId().equalsIgnoreCase("416342612484554752")) {
-                        event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
-                    }else{
+                if (event.getButton().getId().equalsIgnoreCase("alpharius_button")) {
+                    if ((event.getUser().getIdLong() == 204074647245815808L) || (event.getUser().getIdLong() == 416342612484554752L)) {
                         //Edits Embed Message with Updated Record
-                        builder.appendDescription(String.format(formatInfo, users_real_name, ":alpharious:"));
+                        builder.appendDescription(String.format(formatInfo, users_real_name, "\uD83C\uDF5E"));
 
                         MessageEmbed messageEmbed = builder.build();
                         event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
 
+                        player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"Y","N","N"));
 
-                        Query updateExcusedAttendanceQuery = entityManager.createNativeQuery("UPDATE DND_ATTENDANCE_INFO SET EXCUSED='Y',NO_SHOW_OR_NO_RESPONSE='N' WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-                        updateExcusedAttendanceQuery.setParameter(1, event.getUser().getId());
-                        updateExcusedAttendanceQuery.executeUpdate();
-
-                        log.info("{}'s status updated to Excused", users_real_name);
+                        log.info("{}'s status updated to Attending", users_real_name);
 
                         event.reply("Your Response has been Added!").setEphemeral(true).submit();
+
+                    }else{
+                        event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
                     }
                 }
                 if (event.getButton().getId().equalsIgnoreCase("excused_button")) {
@@ -213,10 +195,7 @@ public class DNDTesting extends ListenerAdapter {
                     MessageEmbed messageEmbed = builder.build();
                     event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
 
-
-                    Query updateExcusedAttendanceQuery = entityManager.createNativeQuery("UPDATE DND_ATTENDANCE_INFO SET EXCUSED='Y',NO_SHOW_OR_NO_RESPONSE='N' WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-                    updateExcusedAttendanceQuery.setParameter(1, event.getUser().getId());
-                    updateExcusedAttendanceQuery.executeUpdate();
+                    player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"N","Y","N"));
 
                     log.info("{}'s status updated to Excused", users_real_name);
 
@@ -229,12 +208,8 @@ public class DNDTesting extends ListenerAdapter {
 
                     MessageEmbed messageEmbed = builder.build();
                     event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
-//                event.getInteraction().getMessage().addReaction("\uD83C\uDF5E").queue();
 
-                    Query updateAttendingAttendanceQuery = entityManager.createNativeQuery("UPDATE DND_ATTENDANCE_INFO SET ATTENDING='Y', NO_SHOW_OR_NO_RESPONSE='N' WHERE PLAYERS_NAME= (SELECT PLAYERS_NAME FROM DND_PLAYERS_INFO WHERE DISCORD_USER_ID=?)");
-                    updateAttendingAttendanceQuery.setParameter(1, event.getUser().getId());
-                    updateAttendingAttendanceQuery.executeUpdate();
-
+                    player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"Y","N","N"));
                     log.info("{}'s status updated to Attending", users_real_name);
 
                     event.reply("Your Response has been Added!").setEphemeral(true).submit();
@@ -245,4 +220,7 @@ public class DNDTesting extends ListenerAdapter {
             event.reply("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
         }
     }
+
+
+
 }

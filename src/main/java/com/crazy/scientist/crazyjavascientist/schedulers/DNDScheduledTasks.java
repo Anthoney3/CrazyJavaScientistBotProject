@@ -9,6 +9,7 @@ import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceHistoryRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
 import com.crazy.scientist.crazyjavascientist.utils.DBTablePrinter;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -37,15 +36,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.player_responses;
 import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
 
 @Slf4j
@@ -68,24 +65,16 @@ public class DNDScheduledTasks {
     @Autowired
     private DNDTesting dndTesting;
 
-    @Value("${spring.datasource.url}")
-    private String db_url;
 
-    @Value("${spring.datasource.username}")
-    private String db_username;
-
-    @Value("${spring.datasource.password}")
-    private String db_password;
 
     private long embed_to_be_deleted_msg_id = 0;
 
 
+    //    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
+    public void showUpdateForWhoWillBeAttending() throws ExecutionException, InterruptedException {
 
-//    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
-    public void showUpdateForWhoWillBeAttending() throws SQLException {
-
-        TextChannel channel = shardManager.getGuildsByName("The Java Way",true).get(0)
-                .getTextChannelsByName("dark-n-dangerous-avanti",true).get(0);
+        TextChannel channel = shardManager.getGuildsByName("The Java Way", true).get(0)
+                .getTextChannelsByName("private-bot-testing-channel", true).get(0);
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -94,93 +83,60 @@ public class DNDScheduledTasks {
                 .setThumbnail("https://yawningportal.org/wp-content/uploads/2019/09/dnddescentkeyartjpg-1.jpeg")
                 .setTimestamp(Instant.now()));
 
-        Connection connection = DriverManager.getConnection(db_url, db_username, db_password);
-
-        //Player Counts Per Status
-
-        long attending_player_count = player_responses.entrySet().stream().filter(item -> item.getValue().getAttending().equalsIgnoreCase("y")).count();
-        long excused_player_count = player_responses.entrySet().stream().filter(item -> item.getValue().getExcused().equalsIgnoreCase("y")).count();
-        long no_show_player_count = player_responses.entrySet().stream().filter(item -> item.getValue().getNo_show().equalsIgnoreCase("y")).count();
-
         //Appends Code Block back-ticks before appending database table information as a status update
         //Logic checks to see if any tables are not equal to zero in separate if blocks
         //Then appends respective tables as needed to the embed message description
 
-        builder.get().appendDescription("```");
-        if (attending_player_count != 0) {
-            String attending_players = DBTablePrinter.printTable(connection, "SELECT PLAYERS_NAME, ATTENDING FROM dnd_attendance_info WHERE ATTENDING='Y'", "dnd_attendance_info");
-            builder.get().appendDescription(attending_players.substring(attending_players.indexOf('\n') + 1));
-        }
-        if (excused_player_count != 0) {
-            String excused_players = DBTablePrinter.printTable(connection, "SELECT PLAYERS_NAME, EXCUSED FROM dnd_attendance_info WHERE EXCUSED='Y'", "dnd_attendance_info");
-            builder.get().appendDescription(excused_players.substring(excused_players.indexOf('\n') + 1));
-        }
-        if (no_show_player_count != 0) {
-            String no_show_players = DBTablePrinter.printTable(connection, "SELECT PLAYERS_NAME, NO_SHOW_OR_NO_RESPONSE FROM dnd_attendance_info WHERE NO_SHOW_OR_NO_RESPONSE='Y'", "dnd_attendance_info");
-            builder.get().appendDescription(no_show_players.substring(no_show_players.indexOf('\n') + 1));
-        }
+        String column_one_format = "```%-10.10s";
+        String column_two_format = "%s```";
+        String formatInfo = column_one_format + " " + column_two_format;
+
+        StringBuilder build_message = new StringBuilder();
+        dndTesting.getDiscord_response().forEach((key, value) -> build_message.append(String.format(formatInfo, value.getPlayer_name(), value.getResponse_emoji_unicode().name())));
+
         //Special addition to state all players should be attending if no other status type have been set to Y
-        builder.get().appendDescription("```\n");
-        if(attending_player_count == player_responses.size())
+        builder.get().appendDescription(build_message);
+        if (dndTesting.getDiscord_response().entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.ATTENDING)).count() == dndTesting.getDiscord_response().size())
             builder.get().appendDescription("**All Players Expected To Join!**");
 
 
         //Discord Function to find the most recent DND Session Attendance Embed message sent by the bot to get the message's jump link url
-
-        List<Message> messages_found = new ArrayList<>();
-
-                channel.getIterableHistory()
-                .stream()
-                .iterator()
-                .forEachRemaining(message -> {
-                    if(message.getAuthor().isBot() && !message.getEmbeds().isEmpty() && message.getTimeCreated().isAfter(currentWeekOfRepo.findAll().get(0).getEmbed_insertion_time())){
-                        log.info(message.getEmbeds().get(0).getTitle());
-                        if(message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance"))
-                            messages_found.add(message);
-                    }
-                });
-
-                log.info(messages_found.toString());
-
-        //Gets the first message because this message will be the most recent message sent with the attendance
-        embed_to_be_deleted_msg_id = messages_found.get(0).getIdLong();
-        Message foundMessage = messages_found.get(0);
+        Message foundMessage = channel.getIterableHistory()
+                .takeAsync(500)
+                .thenApply(list -> list.stream()
+                        .filter(message -> message.getAuthor().isBot() && !message.getEmbeds().isEmpty() && message.getTimeCreated().isBefore(OffsetDateTime.now()))
+                        .filter(message -> message.getEmbeds().get(0).getTitle().contains("DND Session Attendance"))
+                        .findFirst()
+                        .get())
+                .get();
+        embed_to_be_deleted_msg_id = foundMessage.getIdLong();
 
         //Logic that runs if there are still status types set to Y for no show
         //This will check for any players that have a remaining status type of no show and ping them in the status update with an @ mention
         //This will also provide the jump link url to the message sent previously by the bot that allows users to update their attendance for the week
 
-        if(no_show_player_count != 0) {
-            player_responses.entrySet().stream().filter(item -> item.getValue().getNo_show().equalsIgnoreCase("y")).forEach(item -> {
-                builder.get().appendDescription(String.format("<@%s>%n", item.getValue().getDiscord_id()));
+        if (dndTesting.getDiscord_response().entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).count() != 0) {
+            dndTesting.getDiscord_response().entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).forEach(item -> {
+                builder.get().appendDescription(String.format("<@%s>%n", item.getKey()));
             });
             builder.get().appendDescription("\n**For anyone listed above, If you don't reply to the message linked below you will be marked as No Show for the week!\nClick the Link below to update your attendance!**");
-            builder.get().appendDescription(String.format("%n%n%s",foundMessage.getJumpUrl()));
+            builder.get().appendDescription(String.format("%n%n%s", foundMessage.getJumpUrl()));
         }
-
         MessageEmbed responseMessage = builder.get().build();
-
         channel.sendMessageEmbeds(responseMessage).queue();
-
-        //Closes any left open connections to the database that were being used by the DBTablePrinter class
-        if(!connection.isClosed())
-            connection.close();
-
         stopwatch.stop();
-
-        log.info("Connection Closed : {}", connection.isClosed());
-        log.info("Status Update Task Finished in : {}",stopwatch.elapsed());
+        log.info("Status Update Task Finished in : {}", stopwatch.elapsed());
     }
 
-//    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
-    public void refreshDNDAttendance(){
+    //    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
+    public void refreshDNDAttendance() {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         log.info("DND Attendance Refresh Task Starting...");
 
-        TextChannel channel = shardManager.getGuildsByName("The Java Way",true).get(0)
-                .getTextChannelsByName("dark-n-dangerous-avanti",true).get(0);
+        TextChannel channel = shardManager.getGuildsByName("The Java Way", true).get(0)
+                .getTextChannelsByName("dark-n-dangerous-avanti", true).get(0);
 
         //Pulls Player Responses from initialized static list context that has populated values upon application startup
         AtomicInteger num_of_attending_players = new AtomicInteger();
@@ -192,19 +148,19 @@ public class DNDScheduledTasks {
         DNDAttendanceHistoryEntity dnd_attendance_history_obj = new DNDAttendanceHistoryEntity();
 
 
-        player_responses.forEach((k,v) -> {
-            if(v.getExcused().equalsIgnoreCase("y")) {
-                names_of_excused_players.append(v.getPlayers_name());
+        dndTesting.getDiscord_response().forEach((k, v) -> {
+            if (v.getResponse_emoji_unicode().equals(UnicodeResponses.EXCUSED)) {
+                names_of_excused_players.append(v.getPlayer_name());
                 names_of_excused_players.append(" | ");
                 num_of_excused_players.getAndIncrement();
             }
-            if(v.getAttending().equalsIgnoreCase("y")){
-                names_of_attending_players.append(v.getPlayers_name());
+            if (v.getResponse_emoji_unicode().equals(UnicodeResponses.ATTENDING)) {
+                names_of_attending_players.append(v.getPlayer_name());
                 names_of_attending_players.append(" | ");
                 num_of_attending_players.getAndIncrement();
             }
-            if(v.getNo_show().equalsIgnoreCase("y")) {
-                names_of_no_show_no_response_players.append(v.getPlayers_name());
+            if (v.getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)) {
+                names_of_no_show_no_response_players.append(v.getPlayer_name());
                 names_of_no_show_no_response_players.append(" | ");
                 num_of_no_show_no_response_players.getAndIncrement();
             }
@@ -212,8 +168,8 @@ public class DNDScheduledTasks {
         dnd_attendance_history_obj.setPlayers_attended(num_of_attending_players.intValue());
         dnd_attendance_history_obj.setPlayers_excused(num_of_excused_players.intValue());
         dnd_attendance_history_obj.setPlayers_no_show(num_of_no_show_no_response_players.intValue());
-        dnd_attendance_history_obj.setPlayers_names_attended((num_of_attending_players.intValue() == 0)? "None" : names_of_attending_players.toString());
-        dnd_attendance_history_obj.setPlayers_names_excused((num_of_excused_players.intValue() == 0)? "None" : names_of_excused_players.toString());
+        dnd_attendance_history_obj.setPlayers_names_attended((num_of_attending_players.intValue() == 0) ? "None" : names_of_attending_players.toString());
+        dnd_attendance_history_obj.setPlayers_names_excused((num_of_excused_players.intValue() == 0) ? "None" : names_of_excused_players.toString());
         dnd_attendance_history_obj.setPlayers_names_no_show((num_of_no_show_no_response_players.intValue() == 0) ? "None" : names_of_no_show_no_response_players.toString());
         dnd_attendance_history_obj.setWeek_of_attendance(ZonedDateTime.now().minusDays(5).format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")));
 
@@ -222,8 +178,7 @@ public class DNDScheduledTasks {
         //Deletes values in Attendance Table and repopulates it with default values for the next week
         //Also saves fresh empty responses to player_responses static list
         attendanceRepo.deleteAll();
-        player_responses.forEach((k,v) -> attendanceRepo.save(new DNDAttendanceEntity(k,v.getPlayers_name(),"N","N","Y")));
-        player_responses = new HashMap<>(attendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity())));
+        dndTesting.getDiscord_response().forEach((k, v) -> attendanceRepo.save(new DNDAttendanceEntity(k, v.getPlayer_name(), "N", "N", "Y")));
         log.info("All Attendance values have been reset for the new week");
 
         log.info("Deleting Messages For the Week");
@@ -232,10 +187,10 @@ public class DNDScheduledTasks {
 
         if (check_if_messages_exist(channel)) {
 
-            if(channel.getIterableHistory().stream().anyMatch(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty())) {
-                channel.purgeMessages(channel.getIterableHistory().stream().filter(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).filter(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update")).toList());
+            if (channel.getIterableHistory().stream().anyMatch(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty())) {
+                channel.purgeMessages(channel.getIterableHistory().stream().filter(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).filter(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update")).collect(Collectors.toList()));
                 channel.sendMessageFormat("All Messages After %s with the title \"DND Attendance Status Update\" or \"DND Session Attendance\" should have been deleted", ZonedDateTime.now().minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))).queueAfter(5, TimeUnit.SECONDS, null, handler);
-            }else {
+            } else {
                 log.error("No Messages Found during Deletion Task!");
             }
 //            channel.purgeMessages(channel.getIterableHistory().stream().filter(message -> message.getTimeCreated().isAfter(OffsetDateTime.from(ZonedDateTime.now().minusDays(5))) && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).filter(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update")).toList());
@@ -243,33 +198,29 @@ public class DNDScheduledTasks {
         stopwatch.stop();
         log.info("Message Deletion Task Finished");
         log.info("Weekly Attendance Refresh Task Completed Successfully!");
-        log.info("Time taken for Attendance Refresh Task Completion was {}",stopwatch.elapsed());
+        log.info("Time taken for Attendance Refresh Task Completion was {}", stopwatch.elapsed());
     }
 
-//    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
+    //    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
     public void sendAttendanceRequestEmbed() {
 
-
-
-        CurrentWeekOfEntity updated_insertion_time = currentWeekOfRepo.findById(1L).isEmpty() ? new CurrentWeekOfEntity(ZonedDateTime.now().minusDays(Math.abs(Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY)).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy"))) : currentWeekOfRepo.findById(1L).get();
-        updated_insertion_time.setEmbed_insertion_time(OffsetDateTime.now());
-        currentWeekOfRepo.save(updated_insertion_time);
 
         Button excused_button = Button.danger("excused_button", Emoji.fromUnicode("\uD83D\uDE2D"));
         Button attending_button = Button.success("attending_button", Emoji.fromUnicode("\uD83C\uDF5E"));
         Button remove_button = Button.secondary("remove_button", Emoji.fromUnicode("\uD83D\uDDD1"));
-        Button alpharius_button = Button.success("alpharius_button",Emoji.fromMarkdown("<:alpharius:1045825620300529818>"));
+        Button alpharius_button = Button.success("alpharius_button", Emoji.fromMarkdown("<:alpharius:1045825620300529818>"));
 
         MessageEmbed builder = new EmbedBuilder().setTitle("DND Session Attendance").setTimestamp(ZonedDateTime.now())
                 .setThumbnail("https://yawningportal.org/wp-content/uploads/2019/09/dnddescentkeyartjpg-1.jpeg").build();
 
-        Message message = new MessageBuilder().setActionRows(ActionRow.of(attending_button,alpharius_button, excused_button, remove_button))
+        Message message = new MessageBuilder().setActionRows(ActionRow.of(attending_button, alpharius_button, excused_button, remove_button))
                 .setContent("@here")
                 .setEmbeds(builder).build();
 
         shardManager.getGuildsByName("The Java Way", true).get(0).getTextChannelsByName("dark-n-dangerous-avanti", true).get(0).sendMessage(message).queue();
 
     }
+
     private boolean check_if_messages_exist(TextChannel channel) {
         return channel.getIterableHistory().stream().filter(message -> message.getTimeCreated().isAfter(OffsetDateTime.from(ZonedDateTime.now().minusDays(5))) && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).anyMatch(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update"));
     }

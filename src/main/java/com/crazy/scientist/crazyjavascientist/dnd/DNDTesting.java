@@ -1,11 +1,13 @@
 package com.crazy.scientist.crazyjavascientist.dnd;
 
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.PlayerResponse;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
 import com.crazy.scientist.crazyjavascientist.utils.DBTablePrinter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -21,27 +23,24 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
+import java.util.HashMap;
 
-import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.player_responses;
+import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
 
 @Slf4j
 @Component
 @NoArgsConstructor
 @Getter
+@Setter
 @ToString
 public class DNDTesting extends ListenerAdapter {
 
@@ -62,6 +61,8 @@ public class DNDTesting extends ListenerAdapter {
 
     @Value("${spring.datasource.password}")
     private String db_password;
+
+    private HashMap<Long, PlayerResponse> discord_response = new HashMap<>();
 
 
     public void testingEmbedsWithActionRows(boolean isAllowedToUseCommand, @Nonnull SlashCommandInteraction event) {
@@ -121,10 +122,9 @@ public class DNDTesting extends ListenerAdapter {
 
 
 
-    @Transactional
-    @Modifying
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
+
 
         try {
 
@@ -132,13 +132,13 @@ public class DNDTesting extends ListenerAdapter {
 
 
 
-            String users_real_name = player_responses.get(event.getUser().getIdLong()).getPlayers_name();
+            PlayerResponse current_player_response = discord_response.get(event.getUser().getIdLong());
 
             String column_one_format = "```%-10.10s";
             String column_two_format = "%s```";
             String formatInfo = column_one_format + " " + column_two_format;
 
-            boolean hasResponded = player_responses.get(event.getUser().getIdLong()).getNo_show().equalsIgnoreCase("n");
+            boolean hasResponded = !discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE);
 
             if (hasResponded && !event.getButton().getId().equalsIgnoreCase("remove_button")) {
                 event.reply("Your Response has already been recorded, If you want to change it use the remove button first").setEphemeral(true).queue();
@@ -149,75 +149,52 @@ public class DNDTesting extends ListenerAdapter {
 
             } else if (hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
 
-                List<String> split_messages = new ArrayList<>(Stream.of(builder.build().getDescription().split("```")).filter(string -> !string.isEmpty()).toList());
-
-                split_messages.removeIf(string -> string.contains(users_real_name));
+                discord_response.replace(event.getUser().getIdLong(),current_player_response,new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.NO_SHOW_NO_RESPONSE));
 
                 StringBuilder build_message = new StringBuilder();
-                split_messages.forEach(message -> build_message.append(String.format("```%s```", message)));
 
+                discord_response.entrySet().stream().filter(item -> !item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).forEach(item -> build_message.append(String.format(formatInfo,item.getValue().getPlayer_name(),item.getValue().getResponse_emoji_unicode().getResponse())));
                 builder.setDescription(build_message);
 
-                player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"N","N","Y"));
-
-                log.info("{}'s Response has been Updated to No Show as {} removed their response", users_real_name, users_real_name);
+                log.info("{}'s Response has been Updated to No Show as {} removed their response", current_player_response.getPlayer_name(), current_player_response.getPlayer_name());
 
                 event.getInteraction().getMessage().editMessageEmbeds(builder.build()).complete();
 
                 event.reply("Your Response Has been Removed").setEphemeral(true).submit();
 
             } else {
-
-                if (event.getButton().getId().equalsIgnoreCase("alpharius_button")) {
-                    if ((event.getUser().getIdLong() == 204074647245815808L) || (event.getUser().getIdLong() == 416342612484554752L)) {
-                        //Edits Embed Message with Updated Record
-                        builder.appendDescription(String.format(formatInfo, users_real_name, "\uD83C\uDF5E"));
-
-                        MessageEmbed messageEmbed = builder.build();
-                        event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
-
-                        player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"Y","N","N"));
-
-                        log.info("{}'s status updated to Attending", users_real_name);
-
-                        event.reply("Your Response has been Added!").setEphemeral(true).submit();
-
-                    }else{
-                        event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
-                    }
-                }
                 if (event.getButton().getId().equalsIgnoreCase("excused_button")) {
-
+                    discord_response.replace(event.getUser().getIdLong(),current_player_response,new PlayerResponse(current_player_response.getPlayer_name(),UnicodeResponses.EXCUSED));
 
                     //Edits Embed Message with Updated Record
-                    builder.appendDescription(String.format(formatInfo, users_real_name, "\uD83D\uDE2D"));
+                    builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
 
                     MessageEmbed messageEmbed = builder.build();
                     event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
 
-                    player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"N","Y","N"));
-
-                    log.info("{}'s status updated to Excused", users_real_name);
+                    log.info("{}'s status updated to Excused", current_player_response.getPlayer_name());
 
                     event.reply("Your Response has been Added!").setEphemeral(true).submit();
 
-                }
-                if (event.getButton().getId().equalsIgnoreCase("attending_button")) {
+                } else if (event.getButton().getId().equalsIgnoreCase("attending_button") || (event.getButton().getId().equalsIgnoreCase("alpharius_button") && ((event.getUser().getIdLong() == 204074647245815808L) || (event.getUser().getIdLong() == 416342612484554752L)))) {
+                    discord_response.replace(event.getUser().getIdLong(),current_player_response,new PlayerResponse(current_player_response.getPlayer_name(),UnicodeResponses.ATTENDING));
 
-                    builder.appendDescription(String.format(formatInfo, users_real_name, "\uD83C\uDF5E"));
+                    //Edits Embed Message with Updated Record
+                    builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
 
                     MessageEmbed messageEmbed = builder.build();
                     event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
 
-                    player_responses.replace(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()),new DNDAttendanceEntity(event.getUser().getIdLong(),player_responses.get(event.getUser().getIdLong()).getPlayers_name(),"Y","N","N"));
-                    log.info("{}'s status updated to Attending", users_real_name);
+                    log.info("{}'s status updated to Attending", current_player_response.getPlayer_name());
 
                     event.reply("Your Response has been Added!").setEphemeral(true).submit();
+                }else{
+                    event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
                 }
             }
         }catch (Exception e){
             e.printStackTrace();
-            event.reply("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
+            shardManager.getTextChannelsByName("private-bot-testing-channel",true).get(0).sendMessage("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
         }
     }
 

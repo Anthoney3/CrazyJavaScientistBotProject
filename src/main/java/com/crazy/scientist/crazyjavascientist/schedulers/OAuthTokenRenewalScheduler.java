@@ -1,11 +1,13 @@
 package com.crazy.scientist.crazyjavascientist.schedulers;
 
+import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_entities.OsuTokenEntity;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuTokenModelI;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.crazy.scientist.crazyjavascientist.security.EncryptorAESGCM;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 
+import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.auth_info;
+
 @Service
 @Slf4j
 public class OAuthTokenRenewalScheduler {
@@ -27,7 +31,12 @@ public class OAuthTokenRenewalScheduler {
     @Autowired
     private OsuTokenModelI osuTokenModelI;
 
-    private final Dotenv config = Dotenv.load();
+    @Autowired
+    private EncryptorAESGCM encryptorAESGCM;
+
+    @Value("${aes.info}")
+    private String aes_info;
+
 
     @Scheduled(cron = "0 0 8 * * *")
     public void renewOsuOAuthToken() throws IOException {
@@ -37,8 +46,8 @@ public class OAuthTokenRenewalScheduler {
 
 
             JSONObject sendingJSON = new JSONObject();
-            sendingJSON.put("client_id", config.get("CLIENTID"));
-            sendingJSON.put("client_secret", config.get("CLIENTSECRET"));
+            sendingJSON.put("client_id", encryptorAESGCM.decrypt(auth_info.get("OSU_CLIENT_ID"),aes_info));
+            sendingJSON.put("client_secret", encryptorAESGCM.decrypt(auth_info.get("OSU_CLIENT_SECRET"),aes_info));
             sendingJSON.put("grant_type", "client_credentials");
             sendingJSON.put("scope", "public");
 

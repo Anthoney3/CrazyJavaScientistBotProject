@@ -5,9 +5,11 @@ import com.crazy.scientist.crazyjavascientist.commands.Greetings;
 import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.CurrentWeekOfEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.PlayerResponse;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
@@ -30,19 +32,19 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.dnd_players;
 import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
 
 @Slf4j
@@ -90,7 +92,6 @@ public class DiscordBotConfigJDAStyle {
     private String aes_info;
 
     public static HashMap<String,String> auth_info;
-    public static HashMap<Long,DNDAttendanceEntity> player_responses;
 
 
 
@@ -149,7 +150,17 @@ public class DiscordBotConfigJDAStyle {
 
         List<CJSConfigEntity> cjs_entites = cjsConfigRepo.findAll().stream().filter(item -> item.getStatus().equalsIgnoreCase("a")).toList();
         auth_info = new HashMap<>(cjs_entites.stream().collect(Collectors.toMap(CJSConfigEntity::getShort_name,CJSConfigEntity::getKey_value)));
-        player_responses= new HashMap<>(dndAttendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity())));
+        HashMap<Long, PlayerResponse> discord_response = new HashMap<>();
+        new HashMap<>(dndAttendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity()))).forEach((k,v) -> {
+            if(v.getNo_show().equalsIgnoreCase("y"))
+                discord_response.put(k,new PlayerResponse(v.getPlayers_name(), UnicodeResponses.NO_SHOW_NO_RESPONSE));
+            if(v.getExcused().equalsIgnoreCase("y"))
+                discord_response.put(k,new PlayerResponse(v.getPlayers_name(),UnicodeResponses.EXCUSED));
+            if(v.getAttending().equalsIgnoreCase("y"))
+                discord_response.put(k,new PlayerResponse(v.getPlayers_name(),UnicodeResponses.ATTENDING));
+        });
+        dnd_testing.setDiscord_response(discord_response);
+        log.info(dnd_testing.getDiscord_response().toString());
     }
 
 
@@ -239,6 +250,8 @@ public class DiscordBotConfigJDAStyle {
             });
         }
     }
+
+
 
 
 }

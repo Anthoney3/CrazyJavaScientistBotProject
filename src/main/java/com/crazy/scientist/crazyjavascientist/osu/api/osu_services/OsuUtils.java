@@ -51,6 +51,8 @@ public class OsuUtils {
 
     public void populateDBOnStartWithOsuRecords(ShardManager manager) throws IOException {
 
+        log.info("Running DB Population Task for OSU...");
+
         List<OsuMembers> osuMembers = new ArrayList<>();
 
         osuMembers.add(OsuMembers.ONE);
@@ -112,7 +114,7 @@ public class OsuUtils {
             }
         }
         log.info("All Users Have been Added to the DB Successfully!");
-        osuDBMemberInfo = osuApiModelI.getAllMemberInfo();
+        osuDBMemberInfo = osuApiModelI.findAll();
     }
 
     public OsuApiEntity getOsuStatsUsingJackson(String userID){
@@ -130,7 +132,7 @@ public class OsuUtils {
 
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
+            connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.findById(1L).get().getToken(), StandardCharsets.UTF_8));
 
 
             try (BufferedReader bf = new BufferedReader(new InputStreamReader(
@@ -180,7 +182,7 @@ public class OsuUtils {
         HttpURLConnection connection = (HttpURLConnection) bestPlayUrl.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Content-Type", "application/json");
-        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.retrieveTokenObjectInstance().getToken(), StandardCharsets.UTF_8));
+        connection.setRequestProperty("Authorization", "Bearer " + new String(osuTokenModelI.findById(1L).get().getToken(), StandardCharsets.UTF_8));
 
 
         try (BufferedReader bf = new BufferedReader(new InputStreamReader(

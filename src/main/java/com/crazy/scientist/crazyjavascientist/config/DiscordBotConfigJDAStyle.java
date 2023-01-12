@@ -11,10 +11,12 @@ import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
 import com.crazy.scientist.crazyjavascientist.listeners.MessageEventListeners;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_entities.OsuBestPlayEntity;
+import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.BestPlayRepo;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_repos.OsuApiModelI;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_services.OsuUtils;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
+import com.crazy.scientist.crazyjavascientist.schedulers.OsuScheduledTasks;
 import com.crazy.scientist.crazyjavascientist.security.EncryptorAESGCM;
 import com.crazy.scientist.crazyjavascientist.security.entities.CJSConfigEntity;
 import com.crazy.scientist.crazyjavascientist.security.repos.CJSConfigRepo;
@@ -56,7 +58,7 @@ public class DiscordBotConfigJDAStyle {
 
 
     @Autowired
-    private  OAuthToken o_auth_token;
+    private  OsuScheduledTasks o_auth_token;
     @Autowired
     private  CommandManager command_manager;
     @Autowired
@@ -67,6 +69,12 @@ public class DiscordBotConfigJDAStyle {
     private  OsuApiModelI osu_api_model_interface;
     @Autowired
     private  OsuApiCall osu_api_call;
+
+    @Autowired
+    private OsuScheduledTasks osuScheduledTasks;
+
+    @Autowired
+    private BestPlayRepo bestPlayRepo;
     @Autowired
     private  OsuUtils osu_utils;
     @Autowired
@@ -117,26 +125,31 @@ public class DiscordBotConfigJDAStyle {
 
         shardManager.addEventListener(command_manager,message_event_listeners, greet,dnd_testing);
 
+        o_auth_token.renewOsuOAuthToken();
 
-        o_auth_token.getOsuOAuthToken(shardManager);
-
-        if(osu_api_model_interface.getAllMemberInfo().isEmpty()) {
+        if(osu_api_model_interface.count() == 0 || bestPlayRepo.count() == 0) {
             osu_utils.populateDBOnStartWithOsuRecords(shardManager);
         }
-
 
         int current_day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         ZonedDateTime current_week = ZonedDateTime.now();
 
-
-        if(currentWeekOfRepo.findAll().size() >0)
-            currentWeekOfRepo.deleteAll();
+        CurrentWeekOfEntity currentWeekOf;
 
         if(current_day != Calendar.MONDAY) {
             int days_to_be_sent_back = Math.abs(((current_day == 1) ? 8 : current_day) - Calendar.MONDAY);
-            currentWeekOfRepo.save(new CurrentWeekOfEntity(current_week.minusDays(days_to_be_sent_back).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy"))));
-            log.info("Current Week Updated to :{}",current_week.minusDays(days_to_be_sent_back).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy")));
+            currentWeekOf = new CurrentWeekOfEntity(current_week.minusDays(days_to_be_sent_back).format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy")));
+        }else{
+            currentWeekOf = new CurrentWeekOfEntity(current_week.format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy")));
         }
+
+        if(currentWeekOfRepo.count() != 0){
+            currentWeekOfRepo.update_current_week_of(currentWeekOf.getCurrent_week());
+        }else{
+            currentWeekOfRepo.save(currentWeekOf);
+        }
+
+        log.info("Current Week Updated to :{}",current_week.format(DateTimeFormatter.ofPattern("dd-MMMM-yyyy")));
 
         if(!new File("./logs/cjs.log").exists()){
             log.info("Log Directory Not Found...Attempting to create new log directory");
@@ -160,7 +173,7 @@ public class DiscordBotConfigJDAStyle {
                 discord_response.put(k,new PlayerResponse(v.getPlayers_name(),UnicodeResponses.ATTENDING));
         });
         dnd_testing.setDiscord_response(discord_response);
-        log.info(dnd_testing.getDiscord_response().toString());
+        osuScheduledTasks.setCurrentBestPlays(new HashMap<>(bestPlayRepo.findAll().stream().collect(Collectors.toMap(OsuBestPlayEntity::getId, Function.identity()))));
     }
 
 

@@ -23,7 +23,6 @@ public class OsuBestPlayEntity {
 
     @Id
     private long id;
-
     @JsonProperty("username")
     @Column(name = "USERNAME")
     private String username;

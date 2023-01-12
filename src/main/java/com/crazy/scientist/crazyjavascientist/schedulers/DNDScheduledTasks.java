@@ -2,7 +2,6 @@ package com.crazy.scientist.crazyjavascientist.schedulers;
 
 
 import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.CurrentWeekOfEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceHistoryEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
@@ -10,7 +9,6 @@ import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceHistory
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
-import com.crazy.scientist.crazyjavascientist.utils.DBTablePrinter;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -24,18 +22,13 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
+import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.*;
 
 @Slf4j
 @Service
@@ -70,11 +63,11 @@ public class DNDScheduledTasks {
     private long embed_to_be_deleted_msg_id = 0;
 
 
-    //    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
+    @Scheduled(cron = "${dnd.attendance.status.update.cron.job}")
     public void showUpdateForWhoWillBeAttending() throws ExecutionException, InterruptedException {
 
-        TextChannel channel = shardManager.getGuildsByName("The Java Way", true).get(0)
-                .getTextChannelsByName("private-bot-testing-channel", true).get(0);
+        TextChannel channel = shardManager.getGuildsByName(THE_JAVA_WAY, true).get(0)
+                .getTextChannelsByName(LIVE_CHANNEL, true).get(0);
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -128,15 +121,15 @@ public class DNDScheduledTasks {
         log.info("Status Update Task Finished in : {}", stopwatch.elapsed());
     }
 
-    //    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
-    public void refreshDNDAttendance() {
+    @Scheduled(cron="${dnd.attendance.refresh.cron.job}")
+    public void refreshDNDAttendance() throws ExecutionException, InterruptedException {
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
         log.info("DND Attendance Refresh Task Starting...");
 
-        TextChannel channel = shardManager.getGuildsByName("The Java Way", true).get(0)
-                .getTextChannelsByName("dark-n-dangerous-avanti", true).get(0);
+        TextChannel channel = shardManager.getGuildsByName(THE_JAVA_WAY, true).get(0)
+                .getTextChannelsByName(LIVE_CHANNEL, true).get(0);
 
         //Pulls Player Responses from initialized static list context that has populated values upon application startup
         AtomicInteger num_of_attending_players = new AtomicInteger();
@@ -186,14 +179,16 @@ public class DNDScheduledTasks {
         ErrorHandler handler = new ErrorHandler().handle(ErrorResponse.UNKNOWN_INTERACTION, (error) -> channel.sendMessage("Some shit broke don't know what but yolo").queue());
 
         if (check_if_messages_exist(channel)) {
-
-            if (channel.getIterableHistory().stream().anyMatch(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty())) {
-                channel.purgeMessages(channel.getIterableHistory().stream().filter(message -> message.getIdLong() == embed_to_be_deleted_msg_id && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).filter(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update")).collect(Collectors.toList()));
+            if (channel.getIterableHistory().stream().anyMatch(message -> (message.getIdLong() == embed_to_be_deleted_msg_id) && message.getAuthor().isBot() && !message.getEmbeds().isEmpty())) {
+                List<Message> messages_to_delete = channel.getIterableHistory().takeAsync(500).thenApply(list -> list.stream().filter(message -> message.getAuthor().isBot() && message.getEmbeds().size() > 0).collect(Collectors.toList())).get();
+                log.info("Message List Size for Deletion : {}", messages_to_delete.size());
+                log.info("Attempting to Purge Messages...");
+                channel.purgeMessages(messages_to_delete);
+                log.info("Purge Process Finished");
                 channel.sendMessageFormat("All Messages After %s with the title \"DND Attendance Status Update\" or \"DND Session Attendance\" should have been deleted", ZonedDateTime.now().minusDays(5).format(DateTimeFormatter.ofPattern("MM/dd/yyyy"))).queueAfter(5, TimeUnit.SECONDS, null, handler);
             } else {
                 log.error("No Messages Found during Deletion Task!");
             }
-//            channel.purgeMessages(channel.getIterableHistory().stream().filter(message -> message.getTimeCreated().isAfter(OffsetDateTime.from(ZonedDateTime.now().minusDays(5))) && message.getAuthor().isBot() && !message.getEmbeds().isEmpty()).filter(message -> message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Session Attendance") || message.getEmbeds().get(0).getTitle().equalsIgnoreCase("DND Attendance Status Update")).toList());
         }
         stopwatch.stop();
         log.info("Message Deletion Task Finished");
@@ -201,7 +196,7 @@ public class DNDScheduledTasks {
         log.info("Time taken for Attendance Refresh Task Completion was {}", stopwatch.elapsed());
     }
 
-    //    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
+    @Scheduled(cron = "${attendance.embed.message.sending.cron.job}")
     public void sendAttendanceRequestEmbed() {
 
 
@@ -217,7 +212,7 @@ public class DNDScheduledTasks {
                 .setContent("@here")
                 .setEmbeds(builder).build();
 
-        shardManager.getGuildsByName("The Java Way", true).get(0).getTextChannelsByName("dark-n-dangerous-avanti", true).get(0).sendMessage(message).queue();
+        shardManager.getGuildsByName(THE_JAVA_WAY, true).get(0).getTextChannelsByName(LIVE_CHANNEL, true).get(0).sendMessage(message).queue();
 
     }
 

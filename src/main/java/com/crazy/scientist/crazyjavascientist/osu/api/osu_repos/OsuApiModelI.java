@@ -17,14 +17,8 @@ public interface OsuApiModelI extends JpaRepository<OsuApiEntity,Long> {
     @Query("select o from OsuApiEntity o where o.username=:username")
     OsuApiEntity getLastRequestByOsuUsername(String username);
 
-    @Query("select o.discordUserID from OsuApiEntity o where o.nickname=:nickname")
-    String getUserByNickName(String nickname);
-
     @Query("select o.pfpPictureUrl from OsuApiEntity o where o.username=:username")
     String getUsersThumbnailByUsername(String username);
-
-    @Query("select o from OsuApiEntity o")
-    List<OsuApiEntity> getAllMemberInfo();
 
     @Query("select o.username from OsuApiEntity o where o.nickname=:nickname")
     String getUsernameByNickname(String nickname);

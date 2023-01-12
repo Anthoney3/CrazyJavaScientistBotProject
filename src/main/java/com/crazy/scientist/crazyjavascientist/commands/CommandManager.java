@@ -70,8 +70,12 @@ public class CommandManager extends ListenerAdapter {
     private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
                     .addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
             Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
-            Commands.slash("get-search-history", "Retrieves the bots google search history"),
-            Commands.slash("dnd-test","A current Test setup for DND purposes.")
+            Commands.slash("get-search-history", "Retrieves the bots google search history")
+            /*Commands.slash("test-code-block-message","Message that sends as a code block but Ephermal"),
+            Commands.slash("dnd-test","A current Test setup for DND purposes."),
+            Commands.slash("test-cleanup","Runs Clean Up Coding to test out cleaning coding."),
+            Commands.slash("test-attendance-update","Sends a test update embed"),
+            Commands.slash("test-sending-attendance-embed","Sends a test attendance request embed")*/
            ));
 
 //     Commands.slash("dnd-test","A current Test setup for DND purposes.")
@@ -102,6 +106,16 @@ public class CommandManager extends ListenerAdapter {
                 case "create-task-list" -> taskManager.createNewUserList(isAllowedToUseCommand, event);
                 case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(isAllowedToUseCommand, event);
                 case "dnd-test" -> dndTesting.testingEmbedsWithActionRows(isAllowedToUseCommand,event);
+                /*case "test-code-block-message" -> dndTesting.test_epheral_message_with_coding_block(isAllowedToUseCommand,event);
+                case "test-cleanup" -> dndScheduledTasks.refreshDNDAttendance();
+                case "test-attendance-update" -> {
+                    try {
+                        dndScheduledTasks.showUpdateForWhoWillBeAttending();
+                    } catch (ExecutionException | InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case "test-sending-attendance-embed" -> dndScheduledTasks.sendAttendanceRequestEmbed();*/
                 default -> {
                     if (command.equalsIgnoreCase("add-to-showcase")) {
 

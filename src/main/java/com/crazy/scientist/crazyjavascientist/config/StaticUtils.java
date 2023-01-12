@@ -11,7 +11,10 @@ public final class StaticUtils {
     public static ShardManager shardManager;
 
     public static List<DNDPlayersEntity> dnd_players;
-//    public static
+
+    public static String TEST_CHANNEL = "private-bot-testing-channel";
+    public static String LIVE_CHANNEL = "dark-n-dangerous-avanti";
+    public static String THE_JAVA_WAY = "The Java Way";
 
     public StaticUtils() {
     }

@@ -106,8 +106,9 @@ public class DiscordBotConfigJDAStyle {
     public void init() throws Exception {
 
         try {
-            if(cjsConfigRepo.count() == 0)
-                populateAuthenticationInformation.populateAuthenticaitonInformation();
+//            Only Used On Local
+//            if(cjsConfigRepo.count() == 0)
+//                populateAuthenticationInformation.populateAuthenticaitonInformation();
             getSetupInformation();
         } catch (Exception e) {
             throw new RuntimeException(e);

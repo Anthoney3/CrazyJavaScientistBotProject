@@ -3,50 +3,42 @@ package com.crazy.scientist.crazyjavascientist.dnd_testing;
 
 import com.crazy.scientist.crazyjavascientist.CrazyJavaScientistApplication;
 import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.CurrentWeekOfEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDPlayersEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OAuthToken;
 import com.crazy.scientist.crazyjavascientist.schedulers.DNDScheduledTasks;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.security.auth.login.LoginException;
-import javax.transaction.Transactional;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.*;
 import static com.crazy.scientist.crazyjavascientist.config.StaticUtils.shardManager;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled
 @SpringBootTest(classes = CrazyJavaScientistApplication.class)
 @ActiveProfiles("testing")
+@Slf4j
 public class IntegrationTest {
 
 
@@ -63,13 +55,16 @@ public class IntegrationTest {
     private DNDPlayersRepo dndPlayersRepo;
 
     @Autowired
+    private DNDTesting dndTesting;
+
+    @Autowired
     private DiscordBotConfigJDAStyle config;
 
     private static final OffsetDateTime test_start_time = OffsetDateTime.now();
 
     private final String [] player_names = {"Anthony","Nick","Ty","Thai","Pat","Shane","Jared","Gary"};
     private final String [] player_nicknames = {"Yelgeiros","Doug","Jimbo","Artemis","Sudoku","Uthal","Digby","Metra"};
-    private final String [] player_discord_ids = {"448620591944171521","416342612484554752","258377595652014080", "154404187256389632","671548924426715152","330537143485333504","274916008643526666", "204074647245815808","196742001306107915"};
+    private final long[] player_discord_ids = {448620591944171521L,416342612484554752L,258377595652014080L, 154404187256389632L,671548924426715152L,330537143485333504L,274916008643526666L, 204074647245815808L,196742001306107915L};
     private final String [] emojis = {"\uD83D\uDE2D","\uD83C\uDF5E"};
 
 
@@ -89,11 +84,10 @@ public class IntegrationTest {
 
     @BeforeEach
     public void init() throws LoginException, IOException {
-        for(int i =0; i < player_names.length; i++){
-            dndPlayersRepo.save(new DNDPlayersEntity(i + 1,player_names[i],player_nicknames[i],player_discord_ids[i]));
-            dndAttendanceRepo.save(new DNDAttendanceEntity(i + 1,player_names[i],"N","N","Y"));
+        for(int i =0; i < player_names.length; i++) {
+            dndPlayersRepo.save(new DNDPlayersEntity(i + 1, player_names[i], player_nicknames[i], String.valueOf(player_discord_ids[i])));
+            dndAttendanceRepo.save(new DNDAttendanceEntity(player_discord_ids[i], player_names[i], "N", "N", "Y"));
         }
-
         if(!initialize_shard_manager){
             try {
                 config.init();
@@ -217,7 +211,10 @@ public class IntegrationTest {
         clean_up_choice="status_update";
         run_clean_up_method= true;
 
-        dndAttendanceRepo.updateAllValuesToExcusedForTesting();
+        HashMap<Long,DNDAttendanceEntity> player_responses = new HashMap<>(dndAttendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity())));
+        player_responses.forEach((k,v) -> player_responses.replace(k,v,new DNDAttendanceEntity(k,v.getPlayers_name(),"N","Y","N")));
+        dndAttendanceRepo.deleteAll();
+        dndAttendanceRepo.saveAll(player_responses.values());
         dnd_scheduled_tasks.showUpdateForWhoWillBeAttending();
 
         Awaitility.await().pollDelay(Duration.ofSeconds(3)).until(()-> check_to_see_if_message_sent_exists(guild_name_to_use,channel_name_to_use,title_context_to_use));
@@ -245,9 +242,11 @@ public class IntegrationTest {
                 .setTitle(title_context_to_use)
                 .setTimestamp(OffsetDateTime.now());
 
-        List<DNDAttendanceEntity> attendanceEntities = new ArrayList<>(dndAttendanceRepo.getDNDAttendance());
 
-        attendanceEntities.forEach(record -> builder.appendDescription(String.format(formatInfo,record.getPlayers_name(),emojis[new Random().nextInt(emojis.length)])));
+        HashMap<Long,DNDAttendanceEntity> player_responses = new HashMap<>(dndAttendanceRepo.findAll().stream().collect(Collectors.toMap(DNDAttendanceEntity::getDiscord_id, Function.identity())));
+
+
+        player_responses.forEach((k,v) -> builder.appendDescription(String.format(formatInfo,v.getPlayers_name(),emojis[new Random().nextInt(emojis.length)])));
 
         MessageEmbed messageEmbed = builder.build();
 
@@ -268,7 +267,9 @@ public class IntegrationTest {
 
       description_text_split.removeIf(item -> item.contains(user_to_remove));
 
-      description_text_split.stream().forEach(item -> message_builder.append(String.format("```%s```",item)));
+      description_text_split.forEach(item -> message_builder.append(String.format("```%s```",item)));
+
+
 
       update_builder.setDescription(message_builder);
 
@@ -421,11 +422,9 @@ public class IntegrationTest {
                 .getTextChannelsByName(channel_name, true).get(0)
                 .getIterableHistory()
                 .stream()
-                .filter(message -> message.getEmbeds().get(0).getTitle().contains(embed_title)
+                .anyMatch(message -> message.getEmbeds().get(0).getTitle().contains(embed_title)
                         && message.getEmbeds().get(0).getTimestamp().isAfter(test_start_time)
-                        && message.getAuthor().isBot())
-                        .findFirst()
-                .isPresent();
+                        && message.getAuthor().isBot());
 
     }
 

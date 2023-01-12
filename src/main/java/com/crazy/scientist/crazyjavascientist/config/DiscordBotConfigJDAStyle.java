@@ -93,8 +93,8 @@ public class DiscordBotConfigJDAStyle {
     @Autowired
     private CJSConfigRepo cjsConfigRepo;
 
-    @Autowired
-    private PopulateAuthenticationInformation populateAuthenticationInformation;
+//    @Autowired
+//    private PopulateAuthenticationInformation populateAuthenticationInformation;
 
     @Value("${aes.info}")
     private String aes_info;

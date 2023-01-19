@@ -4,6 +4,7 @@ package com.crazy.scientist.crazyjavascientist.schedulers;
 import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceHistoryEntity;
+import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.PlayerResponse;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceHistoryRepo;
 import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
@@ -192,6 +193,9 @@ public class DNDScheduledTasks {
         }
         stopwatch.stop();
         log.info("Message Deletion Task Finished");
+        log.info("Resetting Discord Responses");
+        dndTesting.getDiscord_response().forEach((k,v) -> dndTesting.getDiscord_response().replace(k,v,new PlayerResponse(v.getPlayer_name(),UnicodeResponses.NO_SHOW_NO_RESPONSE)));
+        log.info("Responses Reset Successfully");
         log.info("Weekly Attendance Refresh Task Completed Successfully!");
         log.info("Time taken for Attendance Refresh Task Completion was {}", stopwatch.elapsed());
     }

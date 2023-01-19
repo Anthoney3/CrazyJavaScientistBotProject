@@ -1,16 +1,16 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
-import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
 import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
 import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
 import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
 import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
-import lombok.Data;
+import com.crazy.scientist.crazyjavascientist.schedulers.DNDScheduledTasks;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @Getter
@@ -49,6 +52,9 @@ public class CommandManager extends ListenerAdapter {
 
     @Autowired
     private UserTaskTableI userTaskTableI;
+
+    @Autowired
+    private DNDScheduledTasks dndScheduledTasks;
 
     @Autowired
     private DNDTesting dndTesting;

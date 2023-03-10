@@ -59,11 +59,11 @@ public class DiscordBotConfigJDAStyle {
     private DNDAttendanceRepo dndAttendanceRepo;
     private EncryptorAESGCM encryptor;
     private CJSConfigRepo cjsConfigRepo;
-    private PopulateAuthenticationInformation populateAuthenticationInformation;
+//    private PopulateAuthenticationInformation populateAuthenticationInformation;
 
     public DiscordBotConfigJDAStyle(CommandManager command_manager, MessageEventListeners message_event_listeners, Greetings greet, DNDService dnd_testing,
                                     CurrentWeekOfRepo currentWeekOfRepo, DNDPlayersRepo dndPlayersRepo, DNDAttendanceRepo dndAttendanceRepo,
-                                    EncryptorAESGCM encryptor, CJSConfigRepo cjsConfigRepo, PopulateAuthenticationInformation populateAuthenticationInformation) {
+                                    EncryptorAESGCM encryptor, CJSConfigRepo cjsConfigRepo) {
         this.command_manager = command_manager;
         this.message_event_listeners = message_event_listeners;
         this.greet = greet;
@@ -73,7 +73,7 @@ public class DiscordBotConfigJDAStyle {
         this.dndAttendanceRepo = dndAttendanceRepo;
         this.encryptor = encryptor;
         this.cjsConfigRepo = cjsConfigRepo;
-        this.populateAuthenticationInformation = populateAuthenticationInformation;
+//        this.populateAuthenticationInformation = populateAuthenticationInformation;
     }
 
     @Value("${aes.info}")

@@ -1,33 +1,26 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
-import com.crazy.scientist.crazyjavascientist.dnd.DNDTesting;
-import com.crazy.scientist.crazyjavascientist.enums.TaskManagerStatus;
-import com.crazy.scientist.crazyjavascientist.osu.api.osu_utils.OsuApiCall;
-import com.crazy.scientist.crazyjavascientist.repos.UserTaskTableI;
+import com.crazy.scientist.crazyjavascientist.dnd.CancelDND;
+import com.crazy.scientist.crazyjavascientist.dnd.DNDService;
 import com.crazy.scientist.crazyjavascientist.schedulers.DNDScheduledTasks;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @Getter
@@ -35,170 +28,93 @@ import java.util.concurrent.ExecutionException;
 @ToString
 @Component
 public class CommandManager extends ListenerAdapter {
-
-
-    @Autowired
     private FeedBackCommand feedBackCommand;
-    @Autowired
+
+    private EventCreator eventCreator;
     private HelpMessage helpMessage;
-    @Autowired
-    private GoogleSearch googleSearch;
-    @Autowired
     private ShutdownBot shutdownBot;
-    @Autowired
-    private OsuApiCall osuApiCall;
-    @Autowired
-    private TaskManager taskManager;
-
-    @Autowired
-    private UserTaskTableI userTaskTableI;
-
-    @Autowired
+    private AIArtGeneration aiArtGeneration;
     private DNDScheduledTasks dndScheduledTasks;
-
-    @Autowired
-    private DNDTesting dndTesting;
-
-
-
-    private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.")
-                    .addOption(OptionType.BOOLEAN, "email", "Sends an email to the bot owner with the feedback given", true),
-            Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"),
-            Commands.slash("logout", "Kills the bot and shuts it down"),
-            Commands.slash("delete-task-list", "Allows you to delete a task list by its title")
-                    .addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true),
-            Commands.slash("get-message-history", "Shows Server Message History.")
-                    .addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true)
-    ));
-    private final List<CommandData> osuChadGuildCommands = new ArrayList<>(List.of(Commands.slash("get-osu-stats", "Gets a user's stats for osu").addOption(OptionType.STRING, "username", "Uses the users server name to search for stats; Ex. 1 searches for 1's stats", true)));
+    private DNDService dndService;
+    private CancelDND cancelDND;
+    private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.").addOption(OptionType.BOOLEAN, "email", "Sends an email to the bot owner with the feedback given", true), Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"), Commands.slash("logout", "Kills the bot and shuts it down"), Commands.slash("delete-task-list", "Allows you to delete a task list by its title").addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true), Commands.slash("get-message-history", "Shows Server Message History.").addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true)));
+    private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(
+            List.of(
+                    Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case").addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
+                    Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
+                    Commands.slash("get-search-history", "Retrieves the bots google search history"),
+                    Commands.slash("cancel-dnd", "Cancels DND For the week, turning off DND features"),
+                    Commands.slash("create-new-event", "Creates a new Discord Server Event")
+            )
+    );
 
 
-    private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(List.of(Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case")
-                    .addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
-            Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
-            Commands.slash("get-search-history", "Retrieves the bots google search history")
-            /*Commands.slash("test-code-block-message","Message that sends as a code block but Ephermal"),
-            Commands.slash("dnd-test","A current Test setup for DND purposes."),
-            Commands.slash("test-cleanup","Runs Clean Up Coding to test out cleaning coding."),
-            Commands.slash("test-attendance-update","Sends a test update embed"),
-            Commands.slash("test-sending-attendance-embed","Sends a test attendance request embed")*/
-           ));
-
-//     Commands.slash("dnd-test","A current Test setup for DND purposes.")
-
-    public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, GoogleSearch googleSearch, ShutdownBot shutdownBot) {
+    public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, ShutdownBot shutdownBot,
+                          AIArtGeneration aiArtGeneration, DNDScheduledTasks dndScheduledTasks, DNDService dndService,
+                          CancelDND cancelDND, EventCreator eventCreator) {
         this.feedBackCommand = feedBackCommand;
         this.helpMessage = helpMessage;
-        this.googleSearch = googleSearch;
         this.shutdownBot = shutdownBot;
+        this.aiArtGeneration = aiArtGeneration;
+        this.dndScheduledTasks = dndScheduledTasks;
+        this.dndService = dndService;
+        this.cancelDND = cancelDND;
+        this.eventCreator = eventCreator;
     }
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        String command = event.getName();
 
         boolean isAllowedToUseCommand = event.getUser().getIdLong() == 416342612484554752L;
 
-
         try {
-
             switch (event.getName()) {
                 case "feedback" -> feedBackCommand.onFeedbackSlashCommand(event);
                 case "help" -> helpMessage.onHelpSlashCommand(event);
-                case "get-search-history" -> googleSearch.onSearchHistoryCommand(isAllowedToUseCommand, event);
-                case "search" -> googleSearch.onSearchCommand(isAllowedToUseCommand, event);
                 case "logout" -> shutdownBot.shutdownBot(isAllowedToUseCommand, event);
-                case "get-osu-stats" -> osuApiCall.makeOsuAPICall(event);
-                case "create-task-list" -> taskManager.createNewUserList(isAllowedToUseCommand, event);
-                case "delete-task-list" -> taskManager.deleteUserTaskListByTitle(isAllowedToUseCommand, event);
-                case "dnd-test" -> dndTesting.testingEmbedsWithActionRows(isAllowedToUseCommand,event);
-                /*case "test-code-block-message" -> dndTesting.test_epheral_message_with_coding_block(isAllowedToUseCommand,event);
-                case "test-cleanup" -> dndScheduledTasks.refreshDNDAttendance();
-                case "test-attendance-update" -> {
-                    try {
-                        dndScheduledTasks.showUpdateForWhoWillBeAttending();
-                    } catch (ExecutionException | InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                case "test-sending-attendance-embed" -> dndScheduledTasks.sendAttendanceRequestEmbed();*/
-                default -> {
-                    if (command.equalsIgnoreCase("add-to-showcase")) {
-
-
-                        List<String> responseMessages = new ArrayList<>();
-
-                        String userName = event.getUser().getName();
-                        responseMessages.add(userName + " Added this beauty to Show off!");
-                        responseMessages.add(userName + " is such a show off!");
-                        responseMessages.add(userName + " You're gonna have to teach me how you did this one!");
-                        responseMessages.add(userName + " I'm so Jelly!");
-
-                        int messagePick = (int) (Math.random() * responseMessages.size());
-
-                        TextChannel textChannel1 = (TextChannel) Objects.requireNonNull(event.getGuild()).getGuildChannelById(1010606877236789319L);
-
-
-                        if (textChannel1 != null) {
-                            log.info("Message " + event.getOption("message-id").getAsString() + " was added to the " + textChannel1.getName());
-                            Message messageToBeMoved = event.getChannel().retrieveMessageById(Objects.requireNonNull(event.getOption("message-id")).getAsString()).complete();
-                            event.reply("Your message was sent to " + textChannel1.getName() + "!").queue();
-                            textChannel1.sendMessage(responseMessages.get(messagePick)).queue();
-                            textChannel1.sendMessageFormat("%s%n%s", messageToBeMoved.getReferencedMessage(), messageToBeMoved.getAttachments().get(0).getUrl()).queue();
-                        }
-                    }
-                }
+                case "dnd-test" -> dndService.testingEmbedsWithActionRows(isAllowedToUseCommand, event);
+                case "cancel-dnd" -> cancelDND.cancelDNDViaSlashCommand(event);
+                case "add-to-showcase" -> aiArtGeneration.sendArtToShowcaseChannel(event);
+                case "create-new-event" -> eventCreator.createNewDiscordEvent(event);
             }
-
         } catch (Exception e) {
-
-                event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
+            event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();
             e.printStackTrace();
         }
-
-
     }
-
 
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+        if (event.getModalId().contains("feedback")) feedBackCommand.onFeedbackModal(event);
+        if (event.getModalId().equalsIgnoreCase("dnd-cancellation-modal")) cancelDND.onDNDModalCancellationEvent(event);
 
-        feedBackCommand.onFeedbackModal(event);
     }
 
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
-
         switch (event.getGuild().getName()) {
             case "The Java Way" -> {
                 event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-//                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
+                //                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
             }
-            case "Osu Chads" -> event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
-            case "Decent into your Anus" -> event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
         }
-
     }
-
-
-
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
-
-        OptionData statusOption = new OptionData(OptionType.STRING, "status", "The status of completion for the first task", false)
-                .addChoice("Not Started", TaskManagerStatus.NOT_STARTED.getStatus())
-                .addChoice("In Progress", TaskManagerStatus.IN_PROGRESS.getStatus())
-                .addChoice("Completed", TaskManagerStatus.COMPLETED.getStatus());
-
-
-        globalCommands.add(Commands.slash("create-task-list", "Allows you to create a Task List where you can store any tasks you may need to do")
-                .addOption(OptionType.STRING, "title", "The title for the Task List", false)
-                .addOption(OptionType.STRING, "description", "The description for the first task", false)
-                .addOptions(statusOption)
-                .addOption(OptionType.STRING, "comments", "Allows you to add a comment to the task, good for when a task is in progress and has an update", false));
-
-
         event.getJDA().updateCommands().addCommands(this.globalCommands).queue();
     }
+
+    @Override
+    public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
+
+        if (List.of("excused_button", "attending_button", "remove_button", "alpharius_button").contains(event.getButton().getId()))
+            dndService.dndAttendanceButtonInteractionEvent(event);
+        if (event.getButton().getId().equalsIgnoreCase("cancel-dnd"))
+            cancelDND.cancellationButtonInteractionEvent(event);
+        else if (event.getButton().getId().equalsIgnoreCase("cancel-dnd-cancellation"))
+            event.reply("Yayyy DND lives on!").queue();
+
+    }
+
 }

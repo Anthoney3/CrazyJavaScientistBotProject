@@ -11,18 +11,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class SMSController {
 
-    @PostMapping(value = "/message-status", consumes = "application/x-www-form-urlencoded")
-    public void getSMSMessageStatus(@RequestBody String body){
+  @PostMapping(
+    value = "/message-status",
+    consumes = "application/x-www-form-urlencoded"
+  )
+  public void getSMSMessageStatus(@RequestBody String body) {
+    log.info("MSG Status Received: {}", body);
+  }
 
-        log.info("MSG Status Received: {}",body);
-
-    }
-
-    @GetMapping(value = "/test")
-    public String testEndpoint(){
-
-        return "This is a Test Message to see if the controller is working as intended";
-    }
-
-
+  @GetMapping(value = "/test")
+  public String testEndpoint() {
+    return "This is a Test Message to see if the controller is working as intended";
+  }
 }

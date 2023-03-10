@@ -10,6 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 public class PlayerResponse {
 
-    private String player_name;
-    private UnicodeResponses response_emoji_unicode;
+  private String player_name;
+  private UnicodeResponses response_emoji_unicode;
 }

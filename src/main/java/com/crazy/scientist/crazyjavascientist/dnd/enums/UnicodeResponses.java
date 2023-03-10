@@ -6,13 +6,13 @@ import lombok.ToString;
 @Getter
 @ToString
 public enum UnicodeResponses {
-    ATTENDING("\uD83C\uDF5E"),
-    EXCUSED("\uD83D\uDE2D"),
-    NO_SHOW_NO_RESPONSE("N/A");
+  ATTENDING("\uD83C\uDF5E"),
+  EXCUSED("\uD83D\uDE2D"),
+  NO_SHOW_NO_RESPONSE("N/A");
 
-    private String response;
+  private String response;
 
-    UnicodeResponses(String response) {
-        this.response = response;
-    }
+  UnicodeResponses(String response) {
+    this.response = response;
+  }
 }

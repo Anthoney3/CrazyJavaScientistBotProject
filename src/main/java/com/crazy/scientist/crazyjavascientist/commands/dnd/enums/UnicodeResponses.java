@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.dnd.enums;
+package com.crazy.scientist.crazyjavascientist.commands.dnd.enums;
 
 import lombok.Getter;
 import lombok.ToString;

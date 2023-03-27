@@ -1,8 +1,7 @@
 package com.crazy.scientist.crazyjavascientist.commands;
 
-import com.crazy.scientist.crazyjavascientist.dnd.CancelDND;
-import com.crazy.scientist.crazyjavascientist.dnd.DNDService;
-import com.crazy.scientist.crazyjavascientist.schedulers.DNDScheduledTasks;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.CancelDND;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.DNDService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,11 +15,13 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Getter
@@ -28,15 +29,13 @@ import java.util.List;
 @ToString
 @Component
 public class CommandManager extends ListenerAdapter {
-    private FeedBackCommand feedBackCommand;
-
-    private EventCreator eventCreator;
-    private HelpMessage helpMessage;
-    private ShutdownBot shutdownBot;
-    private AIArtGeneration aiArtGeneration;
-    private DNDScheduledTasks dndScheduledTasks;
-    private DNDService dndService;
-    private CancelDND cancelDND;
+    private final FeedBackCommand feedBackCommand;
+    private final EventCreator eventCreator;
+    private final HelpMessage helpMessage;
+    private final ShutdownBot shutdownBot;
+    private final AIArtGeneration aiArtGeneration;
+    private final DNDService dndService;
+    private final CancelDND cancelDND;
     private final List<CommandData> globalCommands = new ArrayList<>(List.of(Commands.slash("feedback", "Send feedback to the bot owner.").addOption(OptionType.BOOLEAN, "email", "Sends an email to the bot owner with the feedback given", true), Commands.slash("help", "Shows a list of commands for Crazy Java Scientist bot"), Commands.slash("logout", "Kills the bot and shuts it down"), Commands.slash("delete-task-list", "Allows you to delete a task list by its title").addOption(OptionType.STRING, "title", "The title of the task list you wish to delete", true), Commands.slash("get-message-history", "Shows Server Message History.").addOption(OptionType.STRING, "msg-id", "ID of the message you wish to find", true)));
     private final List<CommandData> theJavaWayGuildCommands = new ArrayList<>(
             List.of(
@@ -50,13 +49,12 @@ public class CommandManager extends ListenerAdapter {
 
 
     public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, ShutdownBot shutdownBot,
-                          AIArtGeneration aiArtGeneration, DNDScheduledTasks dndScheduledTasks, DNDService dndService,
+                          AIArtGeneration aiArtGeneration, DNDService dndService,
                           CancelDND cancelDND, EventCreator eventCreator) {
         this.feedBackCommand = feedBackCommand;
         this.helpMessage = helpMessage;
         this.shutdownBot = shutdownBot;
         this.aiArtGeneration = aiArtGeneration;
-        this.dndScheduledTasks = dndScheduledTasks;
         this.dndService = dndService;
         this.cancelDND = cancelDND;
         this.eventCreator = eventCreator;
@@ -85,20 +83,15 @@ public class CommandManager extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
-        if (event.getModalId().contains("feedback")) feedBackCommand.onFeedbackModal(event);
-        if (event.getModalId().equalsIgnoreCase("dnd-cancellation-modal")) cancelDND.onDNDModalCancellationEvent(event);
 
+        switch (event.getModalId()){
+            case "email-feedback-modal", "feedback-modal" -> feedBackCommand.onFeedbackModal(event);
+            case "dnd-cancellation-modal"-> cancelDND.onDNDModalCancellationEvent(event);
+        }
     }
 
     @Override
-    public void onGuildReady(@NotNull GuildReadyEvent event) {
-        switch (event.getGuild().getName()) {
-            case "The Java Way" -> {
-                event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();
-                //                event.getGuild().updateCommands().addCommands(this.osuChadGuildCommands).queue();
-            }
-        }
-    }
+    public void onGuildReady(@NotNull GuildReadyEvent event) {event.getGuild().updateCommands().addCommands(this.theJavaWayGuildCommands).queue();}
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
@@ -108,13 +101,11 @@ public class CommandManager extends ListenerAdapter {
     @Override
     public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
 
-        if (List.of("excused_button", "attending_button", "remove_button", "alpharius_button").contains(event.getButton().getId()))
-            dndService.dndAttendanceButtonInteractionEvent(event);
-        if (event.getButton().getId().equalsIgnoreCase("cancel-dnd"))
-            cancelDND.cancellationButtonInteractionEvent(event);
-        else if (event.getButton().getId().equalsIgnoreCase("cancel-dnd-cancellation"))
-            event.reply("Yayyy DND lives on!").queue();
-
+        switch (Objects.requireNonNull(event.getButton().getId())) {
+            case "excused-button", "attending_button", "remove_button", "alpharius_button" -> dndService.dndAttendanceButtonInteractionEvent(event);
+            case "cancel-dnd" -> cancelDND.cancellationButtonInteractionEvent(event);
+            case "cancel-dnd-cancellation" -> event.reply("Yayyy DND lives on!").queue();
+        }
     }
 
 }

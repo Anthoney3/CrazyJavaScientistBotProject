@@ -1,16 +1,19 @@
-package com.crazy.scientist.crazyjavascientist.dnd;
+package com.crazy.scientist.crazyjavascientist.commands.dnd;
 
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.PlayerResponse;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
-import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_repos.DNDAttendanceRepo;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.enums.UnicodeResponses;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities.PlayerResponse;
+import com.google.common.base.Stopwatch;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -18,18 +21,23 @@ import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.sharding.ShardManager;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static com.crazy.scientist.crazyjavascientist.constants.StaticUtils.shardManager;
+import static com.crazy.scientist.crazyjavascientist.constants.StaticUtils.LIVE_CHANNEL;
+import static com.crazy.scientist.crazyjavascientist.constants.StaticUtils.THE_JAVA_WAY;
+
 
 @Slf4j
 @Component
@@ -39,15 +47,22 @@ import static com.crazy.scientist.crazyjavascientist.constants.StaticUtils.shard
 @ToString
 public class DNDService extends ListenerAdapter {
 
-    @Autowired
+
     private DNDPlayersRepo dndPlayersRepo;
-
-    @PersistenceContext
     private EntityManager entityManager;
+    private ShardManager shardManager;
 
-    @Autowired
     private DNDAttendanceRepo attendanceRepo;
+    public DNDService(DNDPlayersRepo dndPlayersRepo, EntityManager entityManager, DNDAttendanceRepo attendanceRepo, ShardManager shardManager) {
+        this.dndPlayersRepo = dndPlayersRepo;
+        this.entityManager = entityManager;
+        this.attendanceRepo = attendanceRepo;
+        this.shardManager = shardManager;
+    }
+
     private HashMap<Long, PlayerResponse> discord_response = new HashMap<>();
+
+    private long embed_to_be_deleted_msg_id = 0;
 
 
     public void testingEmbedsWithActionRows(boolean isAllowedToUseCommand, @Nonnull SlashCommandInteraction event) {
@@ -63,6 +78,58 @@ public class DNDService extends ListenerAdapter {
         } else {
             event.replyFormat("You are not allowed to use slash commands%n Please reach out to  %s  and he can allow you to use commands ", event.getJDA().getUserById(416342612484554752L).getName()).queue();
         }
+    }
+
+    public void handleAttendanceUpdate() throws ExecutionException, InterruptedException {
+        TextChannel channel = shardManager.getGuildsByName(THE_JAVA_WAY, true).get(0).getTextChannelsByName(LIVE_CHANNEL, true).get(0);
+
+        Stopwatch stopwatch = Stopwatch.createStarted();
+
+        AtomicReference<EmbedBuilder> builder = new AtomicReference<>(new EmbedBuilder().setTitle("DND Attendance Status Update").setThumbnail("https://yawningportal.org/wp-content/uploads/2019/09/dnddescentkeyartjpg-1.jpeg").setTimestamp(Instant.now()));
+
+      /*
+            Appends Code Block back-ticks before appending database table information as a status update
+            Logic checks to see if any tables are not equal to zero in separate if blocks
+            Then appends respective tables as needed to the embed message description
+            */
+
+        String column_one_format = "```%-10.10s";
+        String column_two_format = "%s```";
+        String formatInfo = column_one_format + " " + column_two_format;
+
+        StringBuilder build_message = new StringBuilder();
+        discord_response.forEach((key, value) -> build_message.append(String.format(formatInfo, value.getPlayer_name(), value.getResponse_emoji_unicode().name())));
+
+        //Special addition to state all players should be attending if no other status type have been set to Y
+        builder.get().appendDescription(build_message);
+        if (discord_response.entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.ATTENDING)).count() == discord_response.size())
+            builder.get().appendDescription("**All Players Expected To Join!**");
+
+        //Discord Function to find the most recent DND Session Attendance Embed message sent by the bot to get the message's jump link url
+        Message foundMessage = channel.getIterableHistory()
+                .takeAsync(500)
+                .thenApply(list -> list.stream().parallel()
+                        .filter(message -> message.getAuthor().isBot() && !message.getEmbeds().isEmpty() && message.getTimeCreated().isBefore(OffsetDateTime.now()))
+                        .filter(message -> message.getEmbeds().get(0).getTitle().contains("DND Session Attendance")).findFirst().get())
+                .get();
+        embed_to_be_deleted_msg_id = foundMessage.getIdLong();
+
+      /*
+            Logic that runs if there are still status types set to Y for no show
+            This will check for any players that have a remaining status type of no show and ping them in the status update with an @ mention
+            This will also provide the jump link url to the message sent previously by the bot that allows users to update their attendance for the week
+            */
+        if (discord_response.entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).count() != 0) {
+            discord_response.entrySet().stream().filter(item -> item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).forEach(item -> {
+                builder.get().appendDescription(String.format("<@%s>%n", item.getKey()));
+            });
+            builder.get().appendDescription("\n**For anyone listed above, If you don't reply to the message linked below you will be marked as No Show for the week!\nClick the Link below to update your attendance!**");
+            builder.get().appendDescription(String.format("%n%n%s", foundMessage.getJumpUrl()));
+        }
+        MessageEmbed responseMessage = builder.get().build();
+        channel.sendMessageEmbeds(responseMessage).queue();
+        stopwatch.stop();
+        log.info("Status Update Task Finished in : {}", stopwatch.elapsed());
     }
 
     public void dndAttendanceButtonInteractionEvent(@NotNull ButtonInteractionEvent event) {
@@ -129,6 +196,7 @@ public class DNDService extends ListenerAdapter {
             shardManager.getTextChannelsByName("private-bot-testing-channel", true).get(0).sendMessage("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
         }
     }
+
 
 
 }

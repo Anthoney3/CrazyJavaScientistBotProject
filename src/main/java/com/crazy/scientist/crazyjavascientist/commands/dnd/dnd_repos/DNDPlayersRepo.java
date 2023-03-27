@@ -1,7 +1,6 @@
-package com.crazy.scientist.crazyjavascientist.dnd.dnd_repos;
+package com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_repos;
 
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDPlayersEntity;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities.DNDPlayersEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

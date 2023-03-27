@@ -1,4 +1,4 @@
-package com.crazy.scientist.crazyjavascientist.dnd.dnd_entities;
+package com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities;
 
 import javax.persistence.*;
 import lombok.*;

@@ -1,17 +1,24 @@
 package com.crazy.scientist.crazyjavascientist.dnd_testing;
 
-import static com.crazy.scientist.crazyjavascientist.constants.StaticUtils.shardManager;
-import static org.junit.jupiter.api.Assertions.*;
-
 import com.crazy.scientist.crazyjavascientist.CrazyJavaScientistApplication;
-import com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle;
-import com.crazy.scientist.crazyjavascientist.dnd.DNDService;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDAttendanceEntity;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_entities.DNDPlayersEntity;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.CurrentWeekOfRepo;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDAttendanceRepo;
-import com.crazy.scientist.crazyjavascientist.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities.DNDAttendanceEntity;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities.DNDPlayersEntity;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_repos.DNDAttendanceRepo;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_repos.DNDPlayersRepo;
+import com.crazy.scientist.crazyjavascientist.exceptions.DNDException;
 import com.crazy.scientist.crazyjavascientist.schedulers.DNDScheduledTasks;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.sharding.ShardManager;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+
+import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -22,16 +29,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.security.auth.login.LoginException;
-import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled
 @SpringBootTest(classes = CrazyJavaScientistApplication.class)
@@ -40,22 +39,15 @@ import org.springframework.test.context.ActiveProfiles;
 public class IntegrationTest {
 
   @Autowired
-  private DNDScheduledTasks dnd_scheduled_tasks;
-
+  private  DNDScheduledTasks dnd_scheduled_tasks;
   @Autowired
-  private CurrentWeekOfRepo currentWeekOfRepo;
-
+  private  DNDAttendanceRepo dndAttendanceRepo;
   @Autowired
-  private DNDAttendanceRepo dndAttendanceRepo;
-
+  private  DNDPlayersRepo dndPlayersRepo;
   @Autowired
-  private DNDPlayersRepo dndPlayersRepo;
+  private ShardManager shardManager;
 
-  @Autowired
-  private DNDService dndService;
-
-  @Autowired
-  private DiscordBotConfigJDAStyle config;
+  private static ShardManager shardManagerShutdown;
 
   private static final OffsetDateTime test_start_time = OffsetDateTime.now();
 
@@ -128,7 +120,7 @@ public class IntegrationTest {
     }
     if (!initialize_shard_manager) {
       try {
-        config.init();
+        shardManagerShutdown = shardManager;
         initialize_shard_manager = true;
       } catch (Exception e) {
         throw new RuntimeException(e.getCause());
@@ -137,8 +129,7 @@ public class IntegrationTest {
   }
 
   @AfterAll
-  public static void final_clean_up() {
-    shardManager.shutdown();
+  public static void final_clean_up() {shardManagerShutdown.shutdown();
   }
 
   @AfterEach
@@ -155,7 +146,7 @@ public class IntegrationTest {
 
   @Test
   public void test_database_status_update_no_one_attending()
-    throws SQLException, InterruptedException, ExecutionException {
+          throws SQLException, InterruptedException, ExecutionException, DNDException {
     title_context_to_use = "DND Attendance Status Update";
     guild_name_to_use = "The Java Way";
     channel_name_to_use = "private-bot-testing-channel";
@@ -272,7 +263,7 @@ public class IntegrationTest {
 
   @Test
   public void test_database_status_update_all_attending()
-    throws SQLException, InterruptedException, ExecutionException {
+          throws SQLException, InterruptedException, ExecutionException, DNDException {
     title_context_to_use = "DND Attendance Status Update";
     guild_name_to_use = "The Java Way";
     channel_name_to_use = "private-bot-testing-channel";
@@ -315,7 +306,7 @@ public class IntegrationTest {
 
   @Test
   public void test_database_status_update_has_excused_players()
-    throws SQLException, InterruptedException, ExecutionException {
+          throws SQLException, InterruptedException, ExecutionException, DNDException {
     title_context_to_use = "DND Attendance Status Update";
     guild_name_to_use = "The Java Way";
     channel_name_to_use = "private-bot-testing-channel";
@@ -853,7 +844,7 @@ public class IntegrationTest {
       .get();
   }
 
-  private static void clean_up_sent_messages_in_discord(
+  private void clean_up_sent_messages_in_discord(
     String guild_name,
     String channel_name,
     String clean_up_to_run
@@ -885,7 +876,7 @@ public class IntegrationTest {
           .queue();
       }
       case "session_attendance" -> {
-        shardManager
+        shardManagerShutdown
           .getGuildsByName(guild_name, true)
           .get(0)
           .getTextChannelsByName(channel_name, true)

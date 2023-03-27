@@ -1,21 +1,20 @@
 package com.crazy.scientist.crazyjavascientist.schedulers;
 
-import static com.crazy.scientist.crazyjavascientist.config.DiscordBotConfigJDAStyle.auth_info;
-
 import com.crazy.scientist.crazyjavascientist.security.EncryptorAESGCM;
 import com.crazy.scientist.crazyjavascientist.utils.models.PhoneNumbers;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.Calendar;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import static com.crazy.scientist.crazyjavascientist.config.AppConfig.auth_info;
 
 @Slf4j
 @Component
@@ -23,18 +22,20 @@ public class SendSMSMessage {
 
 
     private final EncryptorAESGCM encryptorAESGCM;
+    private final ApplicationContext context;
 
-    public SendSMSMessage(EncryptorAESGCM encryptorAESGCM) {
+    public SendSMSMessage(EncryptorAESGCM encryptorAESGCM, ApplicationContext context) {
         this.encryptorAESGCM = encryptorAESGCM;
+        this.context = context;
     }
 
-    @Value("${aes.info}")
-    private String aes_info;
 
     private final String msgToSend = "This is a Friendly Reminder to update your timesheet for the month!";
 
     @Scheduled(cron = "${sms.w2w.reminder.cron.job}")
     public void sendTextWhenReadyForW2WSubmission() throws Exception {
+
+        String aes_info = (String) context.getBean("aesAuthInfo");
         Calendar calendar = Calendar.getInstance();
 
         if (calendar.get(Calendar.DAY_OF_MONTH) <= 7 && calendar.get(Calendar.DAY_OF_WEEK) == Calendar.FRIDAY) {

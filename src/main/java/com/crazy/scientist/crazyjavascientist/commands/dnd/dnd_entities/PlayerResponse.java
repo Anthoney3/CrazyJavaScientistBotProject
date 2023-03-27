@@ -1,6 +1,6 @@
-package com.crazy.scientist.crazyjavascientist.dnd.dnd_entities;
+package com.crazy.scientist.crazyjavascientist.commands.dnd.dnd_entities;
 
-import com.crazy.scientist.crazyjavascientist.dnd.enums.UnicodeResponses;
+import com.crazy.scientist.crazyjavascientist.commands.dnd.enums.UnicodeResponses;
 import lombok.*;
 
 @ToString

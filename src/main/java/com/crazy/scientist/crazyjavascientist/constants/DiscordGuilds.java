@@ -8,9 +8,7 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 public enum DiscordGuilds {
-  DECENT_INTO_YOUR_ANUS("939244115722371072"),
-  THE_JAVA_WAY("1008992976090963988"),
-  OSU_CHADS("952394376640888853");
+  THE_JAVA_WAY("1008992976090963988");
 
   private String discord_guild_id;
 

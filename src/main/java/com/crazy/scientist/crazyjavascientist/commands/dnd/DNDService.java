@@ -134,69 +134,71 @@ public class DNDService extends ListenerAdapter {
 
     public void dndAttendanceButtonInteractionEvent(@NotNull ButtonInteractionEvent event) {
 
-        try {
-            EmbedBuilder builder = new EmbedBuilder(event.getInteraction().getMessage().getEmbeds().get(0));
+        if (event.getUser().getIdLong() == 448620591944171521L)
+            event.reply("Zach you're not allowed to join in on attendance :P").setEphemeral(true).queue();
+        else {
+            try {
+                EmbedBuilder builder = new EmbedBuilder(event.getInteraction().getMessage().getEmbeds().get(0));
 
-            PlayerResponse current_player_response = discord_response.get(event.getUser().getIdLong());
+                PlayerResponse current_player_response = discord_response.get(event.getUser().getIdLong());
 
-            String column_one_format = "```%-10.10s";
-            String column_two_format = "%s```";
-            String formatInfo = column_one_format + " " + column_two_format;
+                String column_one_format = "```%-10.10s";
+                String column_two_format = "%s```";
+                String formatInfo = column_one_format + " " + column_two_format;
 
-            boolean hasResponded = !discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE);
+                boolean hasResponded = !discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE);
 
-            if (hasResponded && !event.getButton().getId().equalsIgnoreCase("remove_button")) {
-                event.reply("Your Response has already been recorded, If you want to change it use the remove button first").setEphemeral(true).queue();
-            } else if (!hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
-                event.reply("You need to add a response before you can delete it!").setEphemeral(true).queue();
-            } else if (hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
-                discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.NO_SHOW_NO_RESPONSE));
+                if (hasResponded && !event.getButton().getId().equalsIgnoreCase("remove_button")) {
+                    event.reply("Your Response has already been recorded, If you want to change it use the remove button first").setEphemeral(true).queue();
+                } else if (!hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
+                    event.reply("You need to add a response before you can delete it!").setEphemeral(true).queue();
+                } else if (hasResponded && event.getButton().getId().equalsIgnoreCase("remove_button")) {
+                    discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.NO_SHOW_NO_RESPONSE));
 
-                StringBuilder build_message = new StringBuilder();
+                    StringBuilder build_message = new StringBuilder();
 
-                discord_response.entrySet().stream().filter(item -> !item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).forEach(item -> build_message.append(String.format(formatInfo, item.getValue().getPlayer_name(), item.getValue().getResponse_emoji_unicode().getResponse())));
-                builder.setDescription(build_message);
+                    discord_response.entrySet().stream().filter(item -> !item.getValue().getResponse_emoji_unicode().equals(UnicodeResponses.NO_SHOW_NO_RESPONSE)).forEach(item -> build_message.append(String.format(formatInfo, item.getValue().getPlayer_name(), item.getValue().getResponse_emoji_unicode().getResponse())));
+                    builder.setDescription(build_message);
 
-                log.info("{}'s Response has been Updated to No Show as {} removed their response", current_player_response.getPlayer_name(), current_player_response.getPlayer_name());
+                    log.info("{}'s Response has been Updated to No Show as {} removed their response", current_player_response.getPlayer_name(), current_player_response.getPlayer_name());
 
-                event.getInteraction().getMessage().editMessageEmbeds(builder.build()).complete();
+                    event.getInteraction().getMessage().editMessageEmbeds(builder.build()).complete();
 
-                event.reply("Your Response Has been Removed").setEphemeral(true).submit();
-            } else {
-                if (event.getButton().getId().equalsIgnoreCase("excused_button")) {
-                    discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.EXCUSED));
-
-                    //Edits Embed Message with Updated Record
-                    builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
-
-                    MessageEmbed messageEmbed = builder.build();
-                    event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
-
-                    log.info("{}'s status updated to Excused", current_player_response.getPlayer_name());
-
-                    event.reply("Your Response has been Added!").setEphemeral(true).submit();
-                } else if (event.getButton().getId().equalsIgnoreCase("attending_button") || (event.getButton().getId().equalsIgnoreCase("alpharius_button") && ((event.getUser().getIdLong() == 204074647245815808L) || (event.getUser().getIdLong() == 416342612484554752L)))) {
-                    discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.ATTENDING));
-
-                    //Edits Embed Message with Updated Record
-                    builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
-
-                    MessageEmbed messageEmbed = builder.build();
-                    event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
-
-                    log.info("{}'s status updated to Attending", current_player_response.getPlayer_name());
-
-                    event.reply("Your Response has been Added!").setEphemeral(true).submit();
+                    event.reply("Your Response Has been Removed").setEphemeral(true).submit();
                 } else {
-                    event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
+                    if (event.getButton().getId().equalsIgnoreCase("excused_button")) {
+                        discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.EXCUSED));
+
+                        //Edits Embed Message with Updated Record
+                        builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
+
+                        MessageEmbed messageEmbed = builder.build();
+                        event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
+
+                        log.info("{}'s status updated to Excused", current_player_response.getPlayer_name());
+
+                        event.reply("Your Response has been Added!").setEphemeral(true).submit();
+                    } else if (event.getButton().getId().equalsIgnoreCase("attending_button") || (event.getButton().getId().equalsIgnoreCase("alpharius_button") && ((event.getUser().getIdLong() == 204074647245815808L) || (event.getUser().getIdLong() == 416342612484554752L)))) {
+                        discord_response.replace(event.getUser().getIdLong(), current_player_response, new PlayerResponse(current_player_response.getPlayer_name(), UnicodeResponses.ATTENDING));
+
+                        //Edits Embed Message with Updated Record
+                        builder.appendDescription(String.format(formatInfo, discord_response.get(event.getUser().getIdLong()).getPlayer_name(), discord_response.get(event.getUser().getIdLong()).getResponse_emoji_unicode().getResponse()));
+
+                        MessageEmbed messageEmbed = builder.build();
+                        event.getInteraction().getMessage().editMessageEmbeds(messageEmbed).complete();
+
+                        log.info("{}'s status updated to Attending", current_player_response.getPlayer_name());
+
+                        event.reply("Your Response has been Added!").setEphemeral(true).submit();
+                    } else {
+                        event.reply("This button only works for a special individual! Please use either the bread Emoji or Crying Emoji for your response").setEphemeral(true).queue();
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                shardManager.getTextChannelsByName(LIVE_CHANNEL, true).get(0).sendMessage("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            shardManager.getTextChannelsByName("private-bot-testing-channel", true).get(0).sendMessage("Something went wrong, ☕ Java Masochist ☕ will look into it").queue();
         }
     }
-
-
 
 }

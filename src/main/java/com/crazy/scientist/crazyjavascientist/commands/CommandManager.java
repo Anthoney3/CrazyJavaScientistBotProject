@@ -30,7 +30,6 @@ import java.util.Objects;
 @Component
 public class CommandManager extends ListenerAdapter {
     private final FeedBackCommand feedBackCommand;
-    private final EventCreator eventCreator;
     private final HelpMessage helpMessage;
     private final ShutdownBot shutdownBot;
     private final AIArtGeneration aiArtGeneration;
@@ -42,22 +41,20 @@ public class CommandManager extends ListenerAdapter {
                     Commands.slash("add-to-showcase", "Adds the last thing in the channel to the show case").addOption(OptionType.STRING, "message-id", "The message id of what you wish to showcase", true),
                     Commands.slash("search", "Google Search: In testing").addOption(OptionType.STRING, "prompt", "what images you're looking for", true),
                     Commands.slash("get-search-history", "Retrieves the bots google search history"),
-                    Commands.slash("cancel-dnd", "Cancels DND For the week, turning off DND features"),
-                    Commands.slash("create-new-event", "Creates a new Discord Server Event")
+                    Commands.slash("cancel-dnd", "Cancels DND For the week, turning off DND features")
             )
     );
 
 
     public CommandManager(FeedBackCommand feedBackCommand, HelpMessage helpMessage, ShutdownBot shutdownBot,
                           AIArtGeneration aiArtGeneration, DNDService dndService,
-                          CancelDND cancelDND, EventCreator eventCreator) {
+                          CancelDND cancelDND) {
         this.feedBackCommand = feedBackCommand;
         this.helpMessage = helpMessage;
         this.shutdownBot = shutdownBot;
         this.aiArtGeneration = aiArtGeneration;
         this.dndService = dndService;
         this.cancelDND = cancelDND;
-        this.eventCreator = eventCreator;
     }
 
     @Override
@@ -73,7 +70,6 @@ public class CommandManager extends ListenerAdapter {
                 case "dnd-test" -> dndService.testingEmbedsWithActionRows(isAllowedToUseCommand, event);
                 case "cancel-dnd" -> cancelDND.cancelDNDViaSlashCommand(event);
                 case "add-to-showcase" -> aiArtGeneration.sendArtToShowcaseChannel(event);
-                case "create-new-event" -> eventCreator.createNewDiscordEvent(event);
             }
         } catch (Exception e) {
             event.reply("Something went wrong, " + event.getJDA().getUserById(416342612484554752L).getName() + " will take a look into it...").queue();

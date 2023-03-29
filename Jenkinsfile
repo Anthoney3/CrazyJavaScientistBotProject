@@ -4,29 +4,30 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '5'))
     durabilityHint('PERFORMANCE_OPTIMIZED')
     disableConcurrentBuilds()
-    copyArtifactPermission('Discord Bot Deployment')
   }
-  stages{
-    stage('build') {
-      steps {
-        sh '/opt/gradle/gradle-7.4.2/bin/gradle clean build'
+  node {
+      stage 'Clone the project'
+      git ' https://github.com/codersage-in/my_website_springboot'
+
+      dir('.') {
+          stage("Compilation and Analysis") {
+              parallel 'Compilation': {
+                  sh "gradle clean build -x test"
+              }
+          }
+
+          stage("Testing Stage") {
+              parallel 'Unit tests': {
+                  stage("Running unit tests") {
+                      sh "gradle test"
+                  }
+              }
+
+              stage("Staging") {
+                  sh "sudo gradle bootRun -Pargs=spring.profiles.active=server,jasypt.encryptor.password=server-env-key"
+              }
+          }
       }
-    }
-    stage('Remove Old Jar'){
-       steps{
-         sh 'ps -ef | grep cjs-1.jar | awk \'{print $2}\' | xargs kill -9 || true'
-        }
-    }
-    stage('archive') {
-       steps {
-        archiveArtifacts(artifacts: '**/*.jar', followSymlinks: false)
-      }
-    }
-    stage('Copy Artifacts'){
-    steps{
-    copyArtifacts(projectName: 'Discord Bot Deployment',selector: specific("${BUILD_NUMBER}"), target:"/discordbot/crazyjavascientist/cjs/")
-    }
-    }
   }
 }
 

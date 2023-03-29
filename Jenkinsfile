@@ -12,21 +12,21 @@ pipeline {
 
           stage("Compilation and Analysis") {
           steps{
-                  sh "gradle clean build -x test"
+                  sh "./gradlew clean build -x test"
                 }
               }
 
 
           stage("Running Testing") {
                   steps {
-                      sh "gradle test"
+                      sh "./gradlew test"
                   }
           }
 
 
               stage("Staging") {
               steps{
-                  sh "sudo gradle bootRun -Pargs=spring.profiles.active=server,jasypt.encryptor.password=server-env-key"
+                  sh "./gradlew bootRun -Pargs=spring.profiles.active=server,jasypt.encryptor.password=server-env-key"
                   }
               }
           }

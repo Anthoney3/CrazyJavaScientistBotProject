@@ -74,18 +74,12 @@ dependencies {
 
 }
 
-bootRun{
-    if(project.hasProperty('args')){
-        args project.args.split(',')
-    }
-}
-
 tasks.named('test') {
     useJUnitPlatform()
 }
 
 jar {
-
+    enabled=true
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
     from {

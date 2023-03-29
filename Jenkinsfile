@@ -1,3 +1,5 @@
+#!groovy
+
 pipeline {
   agent any
   options {
@@ -19,6 +21,7 @@ pipeline {
                   steps {
                       sh "gradle test"
                   }
+          }
 
 
               stage("Staging") {
@@ -27,7 +30,4 @@ pipeline {
                   }
               }
           }
-      }
-  }
 }
-

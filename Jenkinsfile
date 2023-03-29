@@ -5,27 +5,26 @@ pipeline {
     durabilityHint('PERFORMANCE_OPTIMIZED')
     disableConcurrentBuilds()
   }
-  node {
-      stage('Clone the project'){
-        git ' https://github.com/codersage-in/my_website_springboot'
-      }
 
-      dir('.') {
+  stages {
+
           stage("Compilation and Analysis") {
-              parallel 'Compilation': {
+          steps{
                   sh "gradle clean build -x test"
+                }
               }
-          }
 
-          stage("Testing Stage") {
-              parallel 'Unit tests': {
-                  stage("Running unit tests") {
+
+          stage("Running Testing") {
+                  steps {
                       sh "gradle test"
                   }
-              }
+
 
               stage("Staging") {
+              steps{
                   sh "sudo gradle bootRun -Pargs=spring.profiles.active=server,jasypt.encryptor.password=server-env-key"
+                  }
               }
           }
       }

@@ -6,8 +6,9 @@ pipeline {
     disableConcurrentBuilds()
   }
   node {
-      stage 'Clone the project'
-      git ' https://github.com/codersage-in/my_website_springboot'
+      stage('Clone the project'){
+        git ' https://github.com/codersage-in/my_website_springboot'
+      }
 
       dir('.') {
           stage("Compilation and Analysis") {
